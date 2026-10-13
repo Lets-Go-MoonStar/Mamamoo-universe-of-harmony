@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tuner"
+display_name = "Afinador"
+archetype = "ranged"
+max_hp = 55.0
+damage = 11.0
+speed = 70.0
+attack_range = 340.0
+attack_cooldown = 2.0
+difficulty_cost = 3
+abilities = Array[String](["ranged"])
+sprite_index = 0
+min_floor = 2
+max_floor = 13

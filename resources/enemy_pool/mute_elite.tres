@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mute_elite"
+display_name = "Mute Élite"
+archetype = "ranged"
+max_hp = 130.0
+damage = 14.0
+speed = 90.0
+attack_range = 280.0
+attack_cooldown = 1.2
+difficulty_cost = 5
+abilities = Array[String](["ranged", "enrage"])
+sprite_index = 1
+min_floor = 4
+max_floor = 13
+is_elite = true

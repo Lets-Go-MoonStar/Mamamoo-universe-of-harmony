@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "echo"
+display_name = "Echo"
+archetype = "chaser"
+max_hp = 48.0
+damage = 9.0
+speed = 105.0
+difficulty_cost = 1
+sprite_index = 0
+min_floor = 1
+max_floor = 13

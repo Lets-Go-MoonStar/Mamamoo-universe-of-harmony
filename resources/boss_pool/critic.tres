@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/boss_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "critic"
+display_name = "Crystal Critic"
+hp = 560.0
+damage = 17.0
+speed = 50.0
+phase_count = 3
+abilities = Array[String](["enrage"])
+arena_index = 1
+difficulty = 2
+min_floor = 2
+max_floor = 4
+sprite_index = 2
+exclusive_rewards = Array[String](["harmony_artifact", "crystal_shard"])

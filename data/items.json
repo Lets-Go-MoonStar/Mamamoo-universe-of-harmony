@@ -1,0 +1,322 @@
+[
+  {
+    "id": "harmony_crystal_shard",
+    "display_name": "Harmony Crystal Shard",
+    "rarity": "UNCOMMON",
+    "category": "HARMONY",
+    "max_stacks": 3,
+    "description": "+8% generación de Armonía y +0.5 s de cadena por unidad.",
+    "sheet": 0,
+    "cell": 0
+  },
+  {
+    "id": "star_coin",
+    "display_name": "Star Coin",
+    "rarity": "COMMON",
+    "category": "RESOURCE",
+    "max_stacks": 99,
+    "description": "+1 moneda. Gasta 1 en renovar recompensas o 3 en curar al equipo.",
+    "sheet": 0,
+    "cell": 1
+  },
+  {
+    "id": "moon_token",
+    "display_name": "Moon Token",
+    "rarity": "UNCOMMON",
+    "category": "OFFENSE",
+    "max_stacks": 3,
+    "description": "+10% daño contra enemigos controlados por unidad.",
+    "sheet": 0,
+    "cell": 2
+  },
+  {
+    "id": "music_note_gem",
+    "display_name": "Music Note Gem",
+    "rarity": "UNCOMMON",
+    "category": "UTILITY",
+    "max_stacks": 5,
+    "description": "-8% cooldown de habilidades por unidad. Límite total: 40%.",
+    "sheet": 0,
+    "cell": 3
+  },
+  {
+    "id": "flame_emblem",
+    "display_name": "Flame Emblem",
+    "rarity": "UNCOMMON",
+    "category": "OFFENSE",
+    "max_stacks": 3,
+    "description": "+12% daño contra enemigos con menos de 35% de vida por unidad.",
+    "sheet": 0,
+    "cell": 4
+  },
+  {
+    "id": "heart_recovery_potion",
+    "display_name": "Heart Recovery Potion",
+    "rarity": "COMMON",
+    "category": "RESOURCE",
+    "max_stacks": 99,
+    "description": "Al obtenerla cura 25% de Voz máxima a cada integrante viva. No revive.",
+    "sheet": 0,
+    "cell": 5
+  },
+  {
+    "id": "shield_relic",
+    "display_name": "Shield Relic",
+    "rarity": "UNCOMMON",
+    "category": "DEFENSE",
+    "max_stacks": 1,
+    "description": "Después de recibir daño genera escudo de 12% de Voz máxima. CD 12 s.",
+    "sheet": 0,
+    "cell": 6
+  },
+  {
+    "id": "speed_feather_charm",
+    "display_name": "Speed Feather Charm",
+    "rarity": "UNCOMMON",
+    "category": "UTILITY",
+    "max_stacks": 3,
+    "description": "+10% velocidad y +8% distancia de esquiva por unidad. Velocidad de objetos: máximo +35%.",
+    "sheet": 0,
+    "cell": 7
+  },
+  {
+    "id": "golden_key",
+    "display_name": "Golden Key",
+    "rarity": "COMMON",
+    "category": "RUN_SPECIAL",
+    "max_stacks": 99,
+    "description": "Consumible: abre el cofre especial entre salas para elegir 1 de 3 recompensas.",
+    "sheet": 0,
+    "cell": 8
+  },
+  {
+    "id": "exp_star_orb",
+    "display_name": "EXP Star Orb",
+    "rarity": "COMMON",
+    "category": "RESOURCE",
+    "max_stacks": 3,
+    "description": "+15% experiencia obtenida por unidad. Cada 100 EXP concede una recompensa.",
+    "sheet": 0,
+    "cell": 9
+  },
+  {
+    "id": "energy_battery",
+    "display_name": "Energy Battery",
+    "rarity": "UNCOMMON",
+    "category": "UTILITY",
+    "max_stacks": 3,
+    "description": "+20% regeneración de energía de habilidad por unidad.",
+    "sheet": 0,
+    "cell": 10
+  },
+  {
+    "id": "revival_feather",
+    "display_name": "Revival Feather",
+    "rarity": "RARE",
+    "category": "DEFENSE",
+    "max_stacks": 1,
+    "description": "Una vez por partida: al caer la última integrante, revive al equipo con 30% de Voz. Se consume.",
+    "sheet": 0,
+    "cell": 11
+  },
+  {
+    "id": "treasure_chest",
+    "display_name": "Treasure Chest",
+    "rarity": "COMMON",
+    "category": "RUN_SPECIAL",
+    "max_stacks": 99,
+    "description": "Abre una elección de 3 recompensas; eliges 1.",
+    "sheet": 0,
+    "cell": 12
+  },
+  {
+    "id": "skill_scroll",
+    "display_name": "Skill Scroll / Data Chip",
+    "rarity": "RARE",
+    "category": "UTILITY",
+    "max_stacks": 4,
+    "description": "Elige una integrante para mejorar su habilidad durante esta partida.",
+    "sheet": 0,
+    "cell": 13
+  },
+  {
+    "id": "crown_badge",
+    "display_name": "Crown Badge",
+    "rarity": "RARE",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "En Trío o Cuarteto: +6% daño, velocidad y generación de Armonía.",
+    "sheet": 0,
+    "cell": 14
+  },
+  {
+    "id": "rare_cosmic_orb",
+    "display_name": "Rare Cosmic Orb",
+    "rarity": "RARE",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Cada 4 cambios manuales: explosión de 20 de daño en radio 160 y +8 puntos de Armonía.",
+    "sheet": 0,
+    "cell": 15
+  },
+  {
+    "id": "solar_sun_relic",
+    "display_name": "Solar Sun Relic",
+    "rarity": "EPIC",
+    "category": "CHARACTER_RELIC",
+    "max_stacks": 1,
+    "description": "Habilidad de Solar: campo 4 s, +12% daño dentro y escudo 6% de Voz máxima. CD 8 s.",
+    "sheet": 1,
+    "cell": 0
+  },
+  {
+    "id": "moonbyul_lunar_dagger_sigil",
+    "display_name": "Moonbyul Lunar Dagger Sigil",
+    "rarity": "EPIC",
+    "category": "CHARACTER_RELIC",
+    "max_stacks": 1,
+    "description": "Moonbyul golpea un enemigo controlado: Eclipse 5 s. El siguiente cambio consume la marca con +20% daño de cambio. Solar: escudo 5%; Wheein: pulso; Hwasa: +10% ejecución.",
+    "sheet": 1,
+    "cell": 1
+  },
+  {
+    "id": "wheein_melody_droplet_relic",
+    "display_name": "Wheein Melody Droplet Relic",
+    "rarity": "EPIC",
+    "category": "CHARACTER_RELIC",
+    "max_stacks": 1,
+    "description": "Una reacción de Wheein repite 35% de su daño en otro enemigo. CD 3 s.",
+    "sheet": 1,
+    "cell": 2
+  },
+  {
+    "id": "hwasa_fire_rose_relic",
+    "display_name": "Hwasa Fire Rose Relic",
+    "rarity": "EPIC",
+    "category": "CHARACTER_RELIC",
+    "max_stacks": 1,
+    "description": "Hwasa aplica Ardor 4 s. Si el objetivo muere, explota por 40% del golpe final. Sin explosiones recursivas.",
+    "sheet": 1,
+    "cell": 3
+  },
+  {
+    "id": "harmony_chain_enhancer",
+    "display_name": "Harmony Chain Enhancer",
+    "rarity": "RARE",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Cadena: +4 / 8 / 12 / 20% daño. Al completar Cuarteto emite una onda de 10 de daño.",
+    "sheet": 1,
+    "cell": 4
+  },
+  {
+    "id": "ad_lib_spark_core",
+    "display_name": "Ad-lib Spark Core",
+    "rarity": "RARE",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Durante Ad-lib: +15% velocidad y +12% daño. Cada eliminación extiende 0.5 s, máximo +3 s.",
+    "sheet": 1,
+    "cell": 5
+  },
+  {
+    "id": "voice_amplifier_crystal",
+    "display_name": "Voice Amplifier Crystal",
+    "rarity": "RARE",
+    "category": "DEFENSE",
+    "max_stacks": 1,
+    "description": "+15% Voz máxima de cada integrante y +10% curación recibida. No revive.",
+    "sheet": 1,
+    "cell": 6
+  },
+  {
+    "id": "echo_orb",
+    "display_name": "Echo Orb",
+    "rarity": "RARE",
+    "category": "UTILITY",
+    "max_stacks": 1,
+    "description": "15% de repetir la habilidad al 50% de potencia. No repite ultimates, recompensas ni resurrecciones.",
+    "sheet": 1,
+    "cell": 7
+  },
+  {
+    "id": "duo_bond_charm",
+    "display_name": "Duo Bond Charm",
+    "rarity": "RARE",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Elige dos integrantes: cambiar directamente entre ellas da +15% daño durante 4 s. CD 6 s.",
+    "sheet": 1,
+    "cell": 8
+  },
+  {
+    "id": "trio_emblem",
+    "display_name": "Trio Emblem",
+    "rarity": "EPIC",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Usar 3 integrantes distintas en 5 s: +10% velocidad, regeneración de energía y Armonía durante 6 s.",
+    "sheet": 1,
+    "cell": 9
+  },
+  {
+    "id": "quartet_crown",
+    "display_name": "Quartet Crown",
+    "rarity": "LEGENDARY",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Completar Cuarteto: Encore 5 s, +20% daño, -20% cooldown y +25% Armonía. Solar: escudo grupal 8%; Moonbyul: ralentiza 25%; Wheein: propaga reacción menor; Hwasa: +15% daño crítico.",
+    "sheet": 1,
+    "cell": 10
+  },
+  {
+    "id": "boss_seal_fragment",
+    "display_name": "Boss Seal Fragment",
+    "rarity": "UNCOMMON",
+    "category": "RUN_SPECIAL",
+    "max_stacks": 3,
+    "description": "+3% daño contra jefes por fragmento. Con 3: resistencia adicional de 10% al daño de jefe.",
+    "sheet": 1,
+    "cell": 11
+  },
+  {
+    "id": "starlight_ticket",
+    "display_name": "Starlight Ticket",
+    "rarity": "UNCOMMON",
+    "category": "RUN_SPECIAL",
+    "max_stacks": 99,
+    "description": "Consumible: accede a una sala especial con recompensa rara o superior.",
+    "sheet": 1,
+    "cell": 12
+  },
+  {
+    "id": "portal_compass",
+    "display_name": "Portal Compass",
+    "rarity": "UNCOMMON",
+    "category": "UTILITY",
+    "max_stacks": 1,
+    "description": "Tras limpiar una sala revela los tipos de las próximas rutas.",
+    "sheet": 1,
+    "cell": 13
+  },
+  {
+    "id": "void_protection_talisman",
+    "display_name": "Void Protection Talisman",
+    "rarity": "EPIC",
+    "category": "DEFENSE",
+    "max_stacks": 1,
+    "description": "-15% daño de corrupción y potencia de efectos negativos. Solar: escudos +1 s; Moonbyul: +15% resistencia a control; Wheein: debuffs -20% duración; Hwasa: superarmadura 0.3 s al usar habilidad.",
+    "sheet": 1,
+    "cell": 14
+  },
+  {
+    "id": "legendary_celestial_chest",
+    "display_name": "Legendary Celestial Chest",
+    "rarity": "LEGENDARY",
+    "category": "RUN_SPECIAL",
+    "max_stacks": 99,
+    "description": "Cura 20% de Voz a las vivas y abre una elección de reliquias. Pool actual: corona legendaria y reliquias épicas (solo hay una reliquia legendaria definida).",
+    "sheet": 1,
+    "cell": 15
+  }
+]

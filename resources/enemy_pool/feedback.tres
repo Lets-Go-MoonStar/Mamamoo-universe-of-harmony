@@ -1,0 +1,18 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "feedback"
+display_name = "Feedback"
+archetype = "tank"
+max_hp = 95.0
+damage = 10.0
+speed = 55.0
+defense = 2.0
+difficulty_cost = 2
+abilities = Array[String](["debuff"])
+sprite_index = 2
+min_floor = 1
+max_floor = 13

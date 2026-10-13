@@ -1,0 +1,247 @@
+MAMAMOO: Universe of Harmony
+Documento de estadísticas y efectos de objetos
+Versión de prototipo - Sistema de recompensas, reliquias y sinergias de personajes
+1. Objetivo del sistema
+Propósito: hacer que cada objeto modifique decisiones de combate, rotación de personajes y construcción de la Harmony Chain, evitando que las recompensas sean solamente aumentos planos de estadísticas.
+Solar: Soporte, luz, protección y apertura.
+Moonbyul: Control, movilidad, interrupción y preparación de enemigos.
+Wheein: Adaptación, reacciones, daño técnico y propagación de efectos.
+Hwasa: Daño explosivo, área, presión ofensiva y remate.
+2. Rarezas y categorías
+Rareza
+Uso recomendado
+Ejemplos
+Común
+Frecuente, utilidad directa o economía
+Star Coin, Heart Recovery Potion
+Poco común
+Mejoras generales de combate
+Speed Feather Charm, Flame Emblem
+Raro
+Cambios relevantes de build
+Echo Orb, Duo Bond Charm
+Épico
+Reliquias de personaje o sinergias fuertes
+Solar Sun Relic, Trio Emblem
+Legendario
+Efectos que pueden definir toda la run
+Quartet Crown, Legendary Celestial Chest
+Categorías internas sugeridas para código: RESOURCE, OFFENSE, DEFENSE, UTILITY, HARMONY, CHARACTER_RELIC, RUN_SPECIAL.
+3. Objetos estándar de recompensa
+Objeto
+Rareza
+Categoría
+Stats / efecto
+Usuarios
+Beneficio por personaje
+Harmony Crystal Shard
+Poco común
+HARMONY
++8% generación de Armonía. La ventana de Harmony Chain dura +0.5 s.
+Todos
+Solar: sostiene la cadena con soporte seguro. Moonbyul: mayor margen para enlazar control. Wheein: facilita reacciones. Hwasa: alcanza con más frecuencia ventanas de remate.
+Star Coin
+Común
+RESOURCE
+Moneda de run para tienda, reroll, curación o servicios. Sin bonus directo de combate.
+Todos
+Beneficio económico compartido.
+Moon Token
+Poco común
+OFFENSE
++10% daño contra enemigos afectados por control.
+Todos
+Solar: aprovecha marcas y control aliado. Moonbyul: máxima sinergia por CC. Wheein: potencia control + reacción. Hwasa: mejora ejecuciones sobre objetivos inmovilizados.
+Music Note Gem
+Poco común
+UTILITY
+-8% cooldown global de habilidades.
+Todos
+Solar: más soporte. Moonbyul: más control. Wheein: rotación más fluida. Hwasa: habilidades fuertes disponibles antes.
+Flame Emblem
+Poco común
+OFFENSE
++12% daño contra enemigos con menos de 35% de vida.
+Todos
+Solar: mejora cierre ofensivo. Moonbyul: asegura ejecuciones. Wheein: fortalece fin de combo. Hwasa: mayor valor por rol de remate.
+Heart Recovery Potion
+Común
+RESOURCE
+Recupera 25% de la Voz compartida. Consumible.
+Todos
+Beneficio grupal. Solar puede potenciar indirectamente su valor si posee mejoras de curación.
+Shield Relic
+Poco común
+DEFENSE
+Al recibir daño, genera un escudo equivalente al 12% de la Voz máxima. CD: 12 s.
+Todos
+Solar: puede reforzar la defensa. Moonbyul: protege durante control. Wheein: permite agresión sostenida. Hwasa: facilita entrada a melee.
+Speed Feather Charm
+Poco común
+UTILITY
++10% velocidad de movimiento y +8% distancia de dash.
+Todos
+Solar: reposicionamiento. Moonbyul: alta sinergia con movilidad. Wheein: mayor fluidez. Hwasa: mejor entrada y salida de combate cercano.
+Golden Key
+Común
+RUN_SPECIAL
+Abre una habitación o cofre especial. Consumible.
+Todos
+Acceso a recompensas de run.
+EXP Star Orb
+Común
+RESOURCE
++15% experiencia obtenida durante la run.
+Todos
+Acelera progresión temporal de la run.
+Energy Battery
+Poco común
+UTILITY
++20% regeneración del recurso de habilidad.
+Todos
+Solar: soporte más constante. Moonbyul: encadena control. Wheein: mejora rotación. Hwasa: usa más habilidades de coste alto.
+Revival Feather
+Raro
+DEFENSE
+Una vez por run, evita una derrota y restaura 30% de Voz. Se consume al activarse.
+Todos
+Rescate grupal; Solar puede estabilizar después de la activación.
+Treasure Chest
+Común
+RUN_SPECIAL
+Al abrirse, ofrece 3 recompensas aleatorias y el jugador elige 1.
+Todos
+Genera una elección de build.
+Skill Scroll / Data Chip
+Raro
+UTILITY
+Mejora una habilidad elegida durante la run. La mejora depende del personaje seleccionado.
+Todos
+Permite especializar una skill de Solar, Moonbyul, Wheein o Hwasa.
+Crown Badge
+Raro
+HARMONY
+Mientras la cadena esté en Trío o Cuarteto: +6% daño, +6% velocidad y +6% generación de Armonía.
+Todos
+Premia rotación constante y juego coral.
+Rare Cosmic Orb
+Raro
+HARMONY
+Cada 4 cambios de personaje, libera una explosión cósmica que inflige daño y genera 8 puntos de Armonía.
+Todos
+Solar: activa con rotación de soporte. Moonbyul: facilita control tras la explosión. Wheein: combina con reacciones. Hwasa: usa el burst como preparación de detonación.
+4. Reliquias personales
+Solar Sun Relic
+Rareza: Épico  |  Usuario principal: Solar
+Efecto: Las habilidades de Solar dejan un Campo Radiante durante 4 s. Aliados dentro: +12% daño y escudo equivalente al 6% de Voz máxima. CD interno: 8 s.
+Sinergia con el grupo: Moonbyul entra al campo para iniciar control; Wheein convierte la ventana en daño sostenido; Hwasa aprovecha el +12% durante burst.
+Moonbyul Lunar Dagger Sigil
+Rareza: Épico  |  Usuario principal: Moonbyul
+Efecto: Golpear a un enemigo controlado aplica Eclipse durante 5 s. El siguiente cambio de personaje consume Eclipse e inflige +20% daño de cambio.
+Sinergia con el grupo: Solar: al consumir, obtiene escudo de 5% de Voz máxima. Wheein: genera un pulso elemental. Hwasa: +10% daño adicional de ejecución al consumir.
+Wheein Melody Droplet Relic
+Rareza: Épico  |  Usuario principal: Wheein
+Efecto: Al activar una reacción elemental, una Nota Errante busca a otro enemigo y repite el 35% del daño/efecto. CD: 3 s.
+Sinergia con el grupo: Solar: crea oportunidades con marcas. Moonbyul: agrupa enemigos. Hwasa: remata objetivos debilitados por la propagación.
+Hwasa Fire Rose Relic
+Rareza: Épico  |  Usuario principal: Hwasa
+Efecto: Los golpes de Hwasa aplican Ardor durante 4 s. Si un enemigo con Ardor muere, explota e inflige 40% del daño del golpe final en área.
+Sinergia con el grupo: Solar: mantiene a Hwasa segura. Moonbyul: agrupa enemigos para explosiones encadenadas. Wheein: puede extender Ardor mediante reacción.
+5. Reliquias de sistema, vínculos y progresión
+Objeto
+Rareza
+Categoría
+Stats / efecto
+Harmony Chain Enhancer
+Raro
+HARMONY
+Por número de integrantes distintos en la cadena: 1 = +4% daño, 2 = +8%, 3 = +12%, 4 = +20% y una onda de Armonía que inflige daño ligero en área.
+Ad-lib Spark Core
+Raro
+HARMONY
+Cuando Compostura entra en zona Ad-lib: +15% velocidad de movimiento, +12% daño y cada eliminación extiende Ad-lib 0.5 s, máximo +3 s por activación.
+Voice Amplifier Crystal
+Raro
+DEFENSE
++15% Voz máxima compartida y +10% curación recibida.
+Echo Orb
+Raro
+UTILITY
+Cada habilidad tiene 15% de probabilidad de repetirse automáticamente al 50% de potencia. Los ultimates no pueden repetirse.
+Duo Bond Charm
+Raro
+HARMONY
+Al obtenerlo se eligen 2 integrantes. Cambiar directamente entre ellas otorga +15% daño durante 4 s. CD interno: 6 s.
+Trio Emblem
+Épico
+HARMONY
+Usar 3 integrantes diferentes en 5 s otorga durante 6 s: +10% velocidad, +10% recuperación de recurso y +10% generación de Armonía.
+Quartet Crown
+Legendario
+HARMONY
+Completar una Harmony Chain con las 4 integrantes activa Encore durante 5 s: +20% daño, -20% cooldown y +25% generación de Armonía. Bonus adicional: Solar genera escudo grupal de 8% Voz máxima; Moonbyul ralentiza enemigos cercanos 25%; Wheein hace que ataques propaguen una reacción menor; Hwasa obtiene +15% daño crítico.
+Boss Seal Fragment
+Poco común
+RUN_SPECIAL
+Cada fragmento otorga +3% daño contra jefes. Al reunir 3 fragmentos, se activa una mejora especial de jefe durante la run.
+Starlight Ticket
+Poco común
+RUN_SPECIAL
+Permite acceder a una habitación especial de recompensa, comerciante, evento o desafío. Consumible.
+Portal Compass
+Poco común
+UTILITY
+Después de limpiar una habitación revela el tipo de las siguientes rutas: combate, élite, tienda, evento o recompensa.
+Void Protection Talisman
+Épico
+DEFENSE
+-15% daño de corrupción y efectos negativos. Solar: +1 s duración de escudos. Moonbyul: +15% resistencia a control. Wheein: -20% duración de debuffs recibidos. Hwasa: superarmadura durante los primeros 0.3 s de skills pesadas.
+Legendary Celestial Chest
+Legendario
+RUN_SPECIAL
+Al abrirlo ofrece 3 reliquias legendarias, se elige 1, y restaura 20% de Voz compartida.
+6. Flujo de recompensa al terminar una sala
+Regla sugerida: al completar una sala, mostrar 3 recompensas compatibles con el pool actual y permitir elegir 1. Esto evita drops pasivos poco interesantes y fortalece la construcción de build.
+1. Sala normal: 3 opciones, principalmente Común/Poco común, 10% de posibilidad de Raro.
+2. Sala élite: al menos 1 Raro, pequeña posibilidad de Épico.
+3. Jefe: al menos 1 Épico o reliquia temática, posibilidad de fragmento de jefe.
+4. Sala especial: puede ofrecer Starlight Ticket, Portal Compass, cofres o economía.
+5. Recompensa legendaria: muy baja frecuencia; priorizar Quartet Crown o Celestial Chest.
+7. Reglas de balance para el prototipo
+Evitar que el mismo multiplicador de daño se acumule sin límite. Los bonus porcentuales del mismo tipo deberían usar una suma controlada o un cap.
+Cooldown reduction recomendado: cap de 40% en prototipo.
+Velocidad de movimiento recomendada: cap de +35% desde objetos.
+Generación de Armonía recomendada: cap de +60% desde objetos.
+Los objetos legendarios deben cambiar el patrón de juego, no ser únicamente números grandes.
+Las reliquias personales deben seguir siendo útiles al cambiar a otra integrante, mediante efectos persistentes o sinergias de grupo.
+Echo Orb no debe duplicar ultimates, revivir ni efectos de recompensa para evitar bucles.
+Los efectos de explosión en cadena deben tener límite de propagación o reducción progresiva para mantener estabilidad y legibilidad.
+8. Campos sugeridos para implementación en Godot
+Campo
+Descripción
+id
+Identificador interno único, por ejemplo harmony_crystal_shard
+display_name
+Nombre mostrado al jugador
+rarity
+COMMON, UNCOMMON, RARE, EPIC, LEGENDARY
+category
+RESOURCE, OFFENSE, DEFENSE, UTILITY, HARMONY, CHARACTER_RELIC, RUN_SPECIAL
+allowed_characters
+ALL o lista de personajes
+stackable
+true/false
+max_stacks
+Límite de acumulación
+effect_type
+Tipo de efecto para lógica
+value_1 / value_2
+Valores numéricos principales
+cooldown
+Cooldown interno cuando aplique
+duration
+Duración cuando aplique
+description
+Texto corto mostrado al jugador
+icon_path
+Ruta al icono PNG

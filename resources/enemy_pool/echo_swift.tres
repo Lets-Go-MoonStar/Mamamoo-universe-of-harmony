@@ -1,0 +1,16 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "echo_swift"
+display_name = "Eco Veloz"
+archetype = "swarm"
+max_hp = 30.0
+damage = 6.0
+speed = 135.0
+difficulty_cost = 1
+sprite_index = 1
+min_floor = 1
+max_floor = 13

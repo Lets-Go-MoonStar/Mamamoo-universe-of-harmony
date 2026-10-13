@@ -1,0 +1,17 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "echo_armored"
+display_name = "Echo Acorazado"
+archetype = "tank"
+max_hp = 110.0
+damage = 11.0
+speed = 60.0
+defense = 4.0
+difficulty_cost = 2
+sprite_index = 2
+min_floor = 2
+max_floor = 13
