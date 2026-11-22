@@ -49,3 +49,12 @@ const SOLAR_HEAL_COMPOSURE := 3.0
 const MOONBYUL_DODGE_SHOT := 0.22
 const HWASA_HIGH_COMP_BONUS := 0.05
 const WHEEIN_CHAIN_BONUS := 0.5
+
+# --- Feel / enseñanza ------------------------------------------------------
+const EARLY_HAZARD_FLOOR := 2
+const EARLY_HAZARD_DMG := 5.0
+const EARLY_HAZARD_WARN := 1.6
+const SILENCE_ABILITY_LOCK := 2.2
+const BEAM_WIDTH := 28.0
+const BEAM_LENGTH := 280.0
+const SPLIT_HP_FRAC := 0.35

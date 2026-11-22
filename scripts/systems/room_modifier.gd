@@ -6,6 +6,19 @@ class_name RoomModifier
 extends RefCounted
 
 const DEFS := {
+	# Soft teach (pisos 3–4): vocabulario de mods sin castigar.
+	"opening_act": {
+		"label": "Opening Act",
+		"desc": "Mod suave · +1 zona · tú +5% vel",
+		"extra_hazards": 1,
+		"player_speed": 1.05,
+	},
+	"beam_gallery": {
+		"label": "Beam Gallery",
+		"desc": "Más zonas · enemigos +8% vel (beam stage)",
+		"extra_hazards": 1,
+		"enemy_speed": 1.08,
+	},
 	"high_tempo": {
 		"label": "High Tempo",
 		"desc": "Enemigos +18% vel · tú +8% vel",
@@ -52,29 +65,38 @@ static func all_ids() -> Array[String]:
 
 # Bioma → mods preferidos (longevidad: misma sala, reglas distintas por stage).
 const BIOME_BIAS := {
-	0: ["encore_pressure", "spotlight"], # eclipse arena
-	1: ["spotlight", "high_tempo"], # starlight
-	2: ["muted_stage", "dense_fog"], # sunrise
-	3: ["dense_fog", "harmony_drain"], # lunar
+	0: ["encore_pressure", "spotlight", "beam_gallery"], # eclipse arena
+	1: ["spotlight", "high_tempo", "opening_act"], # starlight
+	2: ["muted_stage", "dense_fog", "opening_act"], # sunrise
+	3: ["dense_fog", "harmony_drain", "beam_gallery"], # lunar
 	4: ["harmony_drain", "muted_stage"], # crystal
-	5: ["high_tempo", "encore_pressure"], # ignite
+	5: ["high_tempo", "encore_pressure", "beam_gallery"], # ignite
 	6: ["high_tempo", "spotlight"], # neon
 	7: ["harmony_drain", "encore_pressure"], # void
-	8: ["spotlight", "encore_pressure"], # throne
+	8: ["spotlight", "encore_pressure", "beam_gallery"], # throne
 }
 
 static func pick(rng: RandomNumberGenerator, floor_number: int, room_type: String, biome_index: int = 0) -> String:
-	if floor_number < 5:
+	if floor_number < 3:
 		return ""
+	if room_type not in ["COMBAT", "ELITE"]:
+		return ""
+	# Pisos 3–4: solo Opening Act (enseña mods antes del kit duro).
+	if floor_number < 5:
+		if room_type == "COMBAT" and rng.randf() > 0.55:
+			return ""
+		return "opening_act"
 	if room_type == "COMBAT" and rng.randf() > 0.40:
 		return ""
 	if room_type == "ELITE" and rng.randf() > 0.85:
 		return ""
-	if room_type not in ["COMBAT", "ELITE"]:
-		return ""
 	var ids: Array[String] = []
 	for id in all_ids():
+		if id == "opening_act":
+			continue
 		if floor_number < 8 and id in ["encore_pressure", "harmony_drain"]:
+			continue
+		if floor_number < 6 and id == "beam_gallery":
 			continue
 		ids.append(id)
 	if ids.is_empty():

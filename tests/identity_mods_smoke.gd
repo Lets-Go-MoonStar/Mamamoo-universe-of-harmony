@@ -25,7 +25,7 @@ func run() -> void:
 	check(IDENTITY.path_tagline("wheein").find("Wheein") >= 0, "Tagline Wheein")
 	check(IDENTITY.sfx_for_path("hwasa") == "hwasa", "SFX path Hwasa")
 
-	check(ROOM_MOD.all_ids().size() == 6, "6 modifiers")
+	check(ROOM_MOD.all_ids().size() == 8, "8 modifiers")
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
 	var picked := ROOM_MOD.pick(rng, 6, "ELITE")

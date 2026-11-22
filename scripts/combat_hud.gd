@@ -22,6 +22,7 @@ const BOSS_INTRO_ART = preload("res://assets/ui/screens/boss_intro_reference.png
 const META = preload("res://scripts/systems/meta_progress.gd")
 const SFX = preload("res://scripts/systems/sfx.gd")
 const SESSION = preload("res://scripts/systems/session_store.gd")
+const PLAYTEST = preload("res://scripts/systems/playtest_log.gd")
 
 var voice_bar: TextureProgressBar
 var harmony_bar: TextureProgressBar
@@ -45,6 +46,11 @@ var summary_art: TextureRect
 var player: HarmonyPlayer
 var paused_game := false
 var hurt_vignette: ColorRect
+var rating_row: HBoxContainer
+var rating_hint: Label
+var _rate_axis := 0
+var _ratings := [0, 0, 0, 0]
+const RATE_LABELS := ["Poder", "Dificultad", "Diversión", "Fatiga"]
 
 # Recorta una región de una hoja de sprites en un AtlasTexture.
 func atlas(sheet: Texture2D, region: Rect2) -> AtlasTexture:
@@ -191,7 +197,7 @@ func _create_defeat_panel() -> void:
 	defeat_panel.add_child(end_art)
 	end_title = label_at(defeat_panel, "EQUIPO DERROTADO", Rect2(340, 310, 600, 40), 30)
 	end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	end_body = label_at(defeat_panel, "", Rect2(360, 360, 560, 140), 15)
+	end_body = label_at(defeat_panel, "", Rect2(360, 340, 560, 100), 14)
 	end_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	end_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary_art = TextureRect.new()
@@ -202,6 +208,21 @@ func _create_defeat_panel() -> void:
 	summary_art.size = Vector2(280, 160)
 	summary_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	defeat_panel.add_child(summary_art)
+	rating_hint = label_at(defeat_panel, "Feel 1–5 · Poder", Rect2(360, 440, 560, 22), 13)
+	rating_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	rating_row = HBoxContainer.new()
+	rating_row.position = Vector2(430, 465)
+	rating_row.size = Vector2(420, 36)
+	rating_row.add_theme_constant_override("separation", 8)
+	defeat_panel.add_child(rating_row)
+	for score in range(1, 6):
+		var b := Button.new()
+		b.text = str(score)
+		b.custom_minimum_size = Vector2(44, 32)
+		b.add_theme_font_size_override("font_size", 14)
+		var captured := score
+		b.pressed.connect(func(): _on_rating_pressed(captured))
+		rating_row.add_child(b)
 	var restart := _menu_button(defeat_panel, "REINICIAR (R)", Vector2(390, 520), func():
 		SESSION.clear()
 		get_tree().reload_current_scene())
@@ -212,6 +233,19 @@ func _create_defeat_panel() -> void:
 	restart.custom_minimum_size = Vector2(240, 48)
 	fresh.custom_minimum_size = Vector2(240, 48)
 	defeat_panel.hide()
+
+func _on_rating_pressed(score: int) -> void:
+	SFX.play("ui")
+	if _rate_axis < 0 or _rate_axis >= 4:
+		return
+	_ratings[_rate_axis] = score
+	_rate_axis += 1
+	if _rate_axis >= 4:
+		PLAYTEST.attach_ratings(_ratings[0], _ratings[1], _ratings[2], _ratings[3])
+		rating_hint.text = "Feel guardado · P%d D%d F%d Fat%d" % [_ratings[0], _ratings[1], _ratings[2], _ratings[3]]
+		rating_row.hide()
+		return
+	rating_hint.text = "Feel 1–5 · %s" % RATE_LABELS[_rate_axis]
 
 func _menu_button(parent: Node, caption: String, origin: Vector2, on_press: Callable) -> Button:
 	var button := Button.new()
@@ -285,7 +319,15 @@ func show_run_end(won: bool, summary: Dictionary) -> void:
 			int(cov.get("solar", 0)), int(cov.get("moonbyul", 0)),
 			int(cov.get("wheein", 0)), int(cov.get("hwasa", 0)),
 		]
-	end_body.text = "Piso %d · Salas %d · Jefes %d · Monedas %d · Ítems %d\nColección %d · Fragmentos +%d (total %d) · Mejor piso %d\nRuns %d (W %d / L %d)%s" % [
+	var path_id := str(summary.get("path", ""))
+	var avg: Dictionary = PLAYTEST.path_avg_feel(path_id) if not path_id.is_empty() else {}
+	var avg_line := ""
+	if int(avg.get("n", 0)) > 0:
+		avg_line = "\nAvg feel %s (n=%d): P%.1f D%.1f F%.1f Fat%.1f" % [
+			path_id, int(avg["n"]), float(avg["power"]), float(avg["difficulty"]),
+			float(avg["fun"]), float(avg["fatigue"]),
+		]
+	end_body.text = "Piso %d · Salas %d · Jefes %d · Monedas %d · Ítems %d\nColección %d · Fragmentos +%d (total %d) · Mejor piso %d\nRuns %d (W %d / L %d)%s%s" % [
 		int(summary.get("floor", 1)),
 		int(summary.get("rooms", 0)),
 		int(summary.get("bosses", 0)),
@@ -299,7 +341,12 @@ func show_run_end(won: bool, summary: Dictionary) -> void:
 		int(meta.get("runs_won", 0)),
 		int(meta.get("runs_lost", 0)),
 		cov_line,
+		avg_line,
 	]
+	_rate_axis = 0
+	_ratings = [0, 0, 0, 0]
+	rating_hint.text = "Feel 1–5 · %s" % RATE_LABELS[0]
+	rating_row.show()
 	defeat_panel.show()
 	pause_panel.hide()
 	if paused_game:

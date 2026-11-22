@@ -27,7 +27,79 @@ static func begin_run(path_id: String, seed_value: int) -> void:
 		"deaths": 0,
 		"won": false,
 		"notes": "",
+		"feel_power": 0,
+		"feel_difficulty": 0,
+		"feel_fun": 0,
+		"feel_fatigue": 0,
 	}
+
+static func attach_ratings(power: int, difficulty: int, fun: int, fatigue: int) -> bool:
+	# Parchea la última línea del JSONL con ratings 1–5 (mano humana).
+	var path := file_path()
+	if not FileAccess.file_exists(path):
+		return false
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return false
+	var lines: PackedStringArray = []
+	while not file.eof_reached():
+		var line := file.get_line()
+		if not line.strip_edges().is_empty():
+			lines.append(line)
+	file.close()
+	if lines.is_empty():
+		return false
+	var parsed: Variant = JSON.parse_string(lines[lines.size() - 1])
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return false
+	var row: Dictionary = parsed
+	row["feel_power"] = clampi(power, 1, 5)
+	row["feel_difficulty"] = clampi(difficulty, 1, 5)
+	row["feel_fun"] = clampi(fun, 1, 5)
+	row["feel_fatigue"] = clampi(fatigue, 1, 5)
+	row["rated_at"] = Time.get_datetime_string_from_system()
+	lines[lines.size() - 1] = JSON.stringify(row)
+	var out := FileAccess.open(path, FileAccess.WRITE)
+	if out == null:
+		return false
+	for line in lines:
+		out.store_line(line)
+	out.close()
+	return true
+
+static func path_avg_feel(path_id: String) -> Dictionary:
+	# Promedios por ruta para leer “¿Moonbyul floja / Hwasa abusiva?”
+	var out := {"n": 0, "power": 0.0, "difficulty": 0.0, "fun": 0.0, "fatigue": 0.0}
+	if not FileAccess.file_exists(file_path()):
+		return out
+	var file := FileAccess.open(file_path(), FileAccess.READ)
+	if file == null:
+		return out
+	while not file.eof_reached():
+		var line := file.get_line().strip_edges()
+		if line.is_empty():
+			continue
+		var parsed: Variant = JSON.parse_string(line)
+		if typeof(parsed) != TYPE_DICTIONARY:
+			continue
+		if str(parsed.get("path", "")) != path_id:
+			continue
+		var p := int(parsed.get("feel_power", 0))
+		if p <= 0:
+			continue
+		out["n"] = int(out["n"]) + 1
+		out["power"] = float(out["power"]) + float(p)
+		out["difficulty"] = float(out["difficulty"]) + float(parsed.get("feel_difficulty", 0))
+		out["fun"] = float(out["fun"]) + float(parsed.get("feel_fun", 0))
+		out["fatigue"] = float(out["fatigue"]) + float(parsed.get("feel_fatigue", 0))
+	file.close()
+	var n := int(out["n"])
+	if n > 0:
+		out["power"] = float(out["power"]) / float(n)
+		out["difficulty"] = float(out["difficulty"]) / float(n)
+		out["fun"] = float(out["fun"]) / float(n)
+		out["fatigue"] = float(out["fatigue"]) / float(n)
+	return out
 
 static func note_floor(floor_number: int) -> void:
 	if _run.is_empty():

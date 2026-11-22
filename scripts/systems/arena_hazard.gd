@@ -19,7 +19,7 @@ var pulses_left := CombatConstants.HAZARD_PULSES
 # normal | elite | storm — cambia color, SFX y feedback.
 var style := "normal"
 
-func setup(player: Node2D, at: Vector2, rad := 68.0, dmg := 9.0, hazard_style := "normal") -> void:
+func setup(player: Node2D, at: Vector2, rad := 68.0, dmg := 9.0, hazard_style := "normal", warn_override := -1.0) -> void:
 	target = player
 	global_position = at
 	radius = rad
@@ -27,6 +27,8 @@ func setup(player: Node2D, at: Vector2, rad := 68.0, dmg := 9.0, hazard_style :=
 	style = hazard_style
 	if style == "elite":
 		warn_time = CombatConstants.ELITE_HAZARD_WARN
+	if warn_override > 0.0:
+		warn_time = warn_override
 	add_to_group("hazards")
 
 func _physics_process(delta: float) -> void:

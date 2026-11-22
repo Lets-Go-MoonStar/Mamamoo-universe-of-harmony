@@ -66,8 +66,12 @@ var telegraph_time := 0.0
 var telegraph_kind := ""
 var snare_cd := 0.0
 var pull_cd := 0.0
+var beam_cd := 0.0
+var beam_dir := Vector2.RIGHT
+var taught_telegraph := false
 const SFX = preload("res://scripts/systems/sfx.gd")
 const HAZARD = preload("res://scripts/systems/arena_hazard.gd")
+const FEEL = preload("res://scripts/systems/combat_feel.gd")
 
 # Configura la variante clásica del prototipo (compatibilidad con tests).
 func setup(new_target: Node2D, variant: int = 0) -> void:
@@ -197,13 +201,17 @@ func _physics_process(delta: float) -> void:
 	dash_cd = maxf(0.0, dash_cd - delta)
 	snare_cd = maxf(0.0, snare_cd - delta)
 	pull_cd = maxf(0.0, pull_cd - delta)
+	beam_cd = maxf(0.0, beam_cd - delta)
 	if telegraph_time > 0.0:
 		telegraph_time = maxf(0.0, telegraph_time - delta)
 		velocity = Vector2.ZERO
+		if telegraph_kind == "beam" and is_instance_valid(target):
+			beam_dir = global_position.direction_to(target.global_position)
 		if telegraph_time <= 0.0:
 			_resolve_telegraph()
 		move_and_slide()
 		art.locomotion(false, direction.x)
+		queue_redraw()
 		return
 	if dash_time > 0.0:
 		dash_time = maxf(0.0, dash_time - delta)
@@ -212,7 +220,10 @@ func _physics_process(delta: float) -> void:
 		move_and_slide()
 		art.locomotion(true, dash_dir.x)
 		return
-	if _has_ability("dash") and dash_cd <= 0.0 and global_position.distance_to(target.global_position) > 90.0:
+	if _has_ability("beam") and beam_cd <= 0.0 and global_position.distance_to(target.global_position) < 260.0:
+		beam_dir = direction
+		_begin_telegraph("beam", 0.85)
+	elif _has_ability("dash") and dash_cd <= 0.0 and global_position.distance_to(target.global_position) > 90.0:
 		_begin_telegraph("dash", 0.55 if _has_ability("telegraph") else 0.15)
 	elif _has_ability("snare") and snare_cd <= 0.0:
 		_begin_telegraph("snare", 0.7)
@@ -230,7 +241,15 @@ func _begin_telegraph(kind: String, duration: float) -> void:
 	telegraph_kind = kind
 	telegraph_time = duration
 	SFX.play("telegraph")
-	VISUALS.float_text(get_parent(), global_position + Vector2(0, -50), "!", Color("ffd166"))
+	var tip := "!"
+	if not taught_telegraph:
+		taught_telegraph = true
+		tip = "¡APARTA!"
+	elif kind == "beam":
+		tip = "BEAM"
+	elif kind == "pull":
+		tip = "PULL"
+	VISUALS.float_text(get_parent(), global_position + Vector2(0, -50), tip, Color("ffd166"))
 
 func _resolve_telegraph() -> void:
 	var kind := telegraph_kind
@@ -256,10 +275,29 @@ func _resolve_telegraph() -> void:
 			VISUALS.burst(self, VISUALS.STATUS, 3, 6, 90.0, Vector2.ZERO, 0.35)
 			VISUALS.float_text(get_parent(), global_position + Vector2(0, -40), "PULL", Color("c77dff"))
 			_melee_contact()
+		"beam":
+			beam_cd = 4.2
+			_resolve_beam()
 		"shot":
 			_fire_projectile()
 		_:
 			pass
+
+func _resolve_beam() -> void:
+	var tip := global_position + beam_dir * CombatConstants.BEAM_LENGTH
+	VISUALS.float_text(get_parent(), tip, "BEAM", Color("ff5964"))
+	SFX.play("hazard")
+	FEEL.hit_enemy(get_parent(), tip, contact_damage, true)
+	if is_instance_valid(target) and target.has_method("receive_damage"):
+		var to_t: Vector2 = target.global_position - global_position
+		var along := to_t.dot(beam_dir)
+		if along > 0.0 and along < CombatConstants.BEAM_LENGTH:
+			var perp := absf(to_t.cross(beam_dir))
+			if perp <= CombatConstants.BEAM_WIDTH:
+				target.receive_damage(contact_damage * 1.15, _has_ability("corruption"), _contact_boss_flag())
+				if _has_ability("silence") and target is HarmonyPlayer:
+					target.ability_cd = maxf(target.ability_cd, CombatConstants.SILENCE_ABILITY_LOCK)
+					VISUALS.float_text(get_parent(), target.global_position + Vector2(0, -40), "SILENCE", Color("4cc9f0"))
 
 # Arquetipo ranged: mantiene distancia de tiro, se desplaza en perpendicular
 # (finta) y dispara un proyectil enemigo cuando el CD está listo.
@@ -304,6 +342,9 @@ func _melee_contact() -> void:
 		target.receive_damage(contact_damage, _has_ability("corruption"), _contact_boss_flag())
 		if can_debuff and _has_ability("debuff") and not target.team_defeated:
 			target.apply_debuff(2.0, 0.20)
+		if can_debuff and _has_ability("silence") and target is HarmonyPlayer:
+			target.ability_cd = maxf(target.ability_cd, CombatConstants.SILENCE_ABILITY_LOCK)
+			VISUALS.float_text(get_parent(), target.global_position + Vector2(0, -40), "SILENCE", Color("4cc9f0"))
 	art.action("ability" if is_boss else "attack", 0.4)
 	contact_cd = attack_cooldown
 
@@ -313,16 +354,19 @@ func take_damage(amount: float, _member_index: int = -1) -> void:
 	if dying or amount <= 0.0:
 		return
 	hp -= amount
-	hit_flash = 0.10
+	hit_flash = 0.16
 	queue_redraw()
 	if is_inside_tree() and amount >= 1.0:
 		var tint := Color("ffd166") if is_boss or (data != null and data.is_elite) else Color("f8f8ff")
 		VISUALS.float_text(get_parent(), global_position + Vector2(0, -40), "-%d" % int(round(amount)), tint)
+		FEEL.hit_enemy(get_parent(), global_position, amount, amount >= 18.0 or is_boss)
 	_maybe_enrage()
 	if hp <= 0.0:
 		dying = true
 		if is_inside_tree():
-			# Overview atlas supplies the dissolving silhouettes for defeated enemies.
+			FEEL.kill_pop(get_parent(), global_position)
+			if _has_ability("split"):
+				_spawn_splitling()
 			var row := 0
 			if data != null:
 				row = {"chaser": 0, "ranged": 1, "tank": 3, "swarm": 4}.get(data.archetype, 2)
@@ -332,6 +376,28 @@ func take_damage(amount: float, _member_index: int = -1) -> void:
 			fade.tween_callback(ghost.queue_free)
 		defeated.emit(self)
 		queue_free()
+
+func _spawn_splitling() -> void:
+	if data == null or not is_inside_tree():
+		return
+	var child := HarmonyEnemy.new()
+	var soft := data.duplicate(true)
+	soft.max_hp = maxf(12.0, data.max_hp * CombatConstants.SPLIT_HP_FRAC)
+	soft.damage = maxf(4.0, data.damage * 0.55)
+	soft.is_elite = false
+	soft.abilities = []
+	soft.difficulty_cost = 1
+	soft.display_name = str(data.display_name) + " Echo"
+	child.setup_data(target, soft, 1.0, 1.0)
+	child.global_position = global_position + Vector2(28, -12)
+	child.add_to_group("enemies")
+	get_parent().add_child(child)
+	var host := get_tree().current_scene
+	if host != null and host.has_method("_on_enemy_defeated"):
+		child.defeated.connect(host._on_enemy_defeated)
+		if "room_budget" in host:
+			host.room_budget = int(host.room_budget) + 1
+	VISUALS.float_text(get_parent(), child.global_position, "SPLIT", Color("c77dff"))
 
 # Verifica umbrales de fase del jefe: emite la señal y activa la furia si el
 # jefe posee "enrage". La sala del jefe NO invoca refuerzos en ningún cambio.
@@ -418,3 +484,7 @@ func _draw() -> void:
 		if telegraph_kind in ["dash", "pull"] and is_instance_valid(target):
 			var tip := (target.global_position - global_position).limit_length(70.0)
 			draw_line(Vector2.ZERO, tip, Color("ff5964", 0.65), 2.0)
+		if telegraph_kind == "beam":
+			var end := beam_dir * CombatConstants.BEAM_LENGTH
+			draw_line(Vector2.ZERO, end, Color("ff5964", 0.35 + pulse * 0.4), CombatConstants.BEAM_WIDTH * 0.35)
+			draw_circle(end, 10.0, Color("ffd166", 0.5))

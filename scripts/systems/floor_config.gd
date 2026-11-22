@@ -93,20 +93,22 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 		"res://resources/enemy_pool/stage_marshal.tres",
 		"res://resources/enemy_pool/lane_diva.tres",
 		"res://resources/enemy_pool/rift_caller.tres",
+		"res://resources/enemy_pool/beam_diva.tres",
 	]
 	var pool: Array[String] = early.duplicate()
 	if floor_number >= 2:
 		pool.append_array(mid.slice(0, 2))
 	if floor_number >= 3:
 		pool.append_array(mid.slice(2, 4))
+		pool.append(extra[11]) # beam_diva — enseña BEAM temprano
 	if floor_number >= 4:
 		pool.append_array(late)
 		pool.append(extra[2])
+		pool.append(extra[1]) # pulse_swarm + split
 	if floor_number >= 5:
 		pool.append(extra[0])
 		pool.append(extra[5])
 	if floor_number >= 6:
-		pool.append(extra[1])
 		pool.append(extra[6])
 		pool.append(extra[8])
 	if floor_number >= 7:

@@ -45,6 +45,7 @@ const ROOM_MOD = preload("res://scripts/systems/room_modifier.gd")
 const IDENTITY = preload("res://scripts/systems/member_identity.gd")
 const PLAYTEST = preload("res://scripts/systems/playtest_log.gd")
 const BOSS_SCRIPTS = preload("res://scripts/systems/boss_scripts.gd")
+const FEEL = preload("res://scripts/systems/combat_feel.gd")
 var stage_index := 0
 var stage_selector: OptionButton
 # Contenedor de todos los actores (jugador + enemigos); ordena por Y.
@@ -67,11 +68,13 @@ var defeated := 0
 var rng := RandomNumberGenerator.new()
 var arena_rect := Rect2(90, 442, 1100, 164)
 var _intro_floor_shown := -1
+var _taught_hazard := false
 
 func _ready() -> void:
 	rng.randomize()
 	_setup_inputs()
 	SFX.ensure(self)
+	FEEL.ensure(self)
 	stage_index = int(get_tree().get_meta("stage_index", 0))
 	actors = Node2D.new()
 	actors.y_sort_enabled = true
@@ -286,14 +289,22 @@ func _spawn_wave(wave: Array) -> void:
 		spawned += 1
 
 # Puzzle de sala: patrones rotan por piso/seed para no quemar un solo set piece.
+# Pisos 2–3: zona suave + tip (enseña el verbo antes del set piece real).
 func _spawn_room_hazards(room: RoomData) -> void:
 	if room == null or room.room_type not in ["COMBAT", "ELITE", "BOSS"]:
 		return
-	if run.current_floor < 4:
+	if run.current_floor < CombatConstants.EARLY_HAZARD_FLOOR:
 		return
-	var rad := 60.0 + run.current_floor * 1.5
-	var dmg := 7.0 + run.current_floor * 0.4
+	var early := run.current_floor < 4
+	var rad := (48.0 if early else 60.0) + run.current_floor * 1.5
+	var dmg := CombatConstants.EARLY_HAZARD_DMG if early else (7.0 + run.current_floor * 0.4)
+	var warn := CombatConstants.EARLY_HAZARD_WARN if early else -1.0
 	if room.room_type == "ELITE":
+		if early:
+			# Élite temprana: una zona, no patrón completo.
+			_spawn_hazard_at(arena_rect.get_center(), rad, dmg + 1.0, "normal", warn)
+			_teach_hazard_tip()
+			return
 		var elite_pat := _elite_pattern_for_room()
 		var count := 4 if elite_pat in ["cross", "corners", "diagonal"] else 3
 		_spawn_hazard_pattern(elite_pat, count, rad, dmg + CombatConstants.ELITE_HAZARD_DMG_BONUS, "elite")
@@ -306,14 +317,24 @@ func _spawn_room_hazards(room: RoomData) -> void:
 		_spawn_hazard_pattern("lanes", 2, rad * 0.9, dmg, "normal")
 		_spawn_extra_hazards_from_mod(rad, dmg)
 		return
-	var count := 1 if room.room_type == "COMBAT" else 2
+	var count := 1 if room.room_type == "COMBAT" or early else 2
+	if early:
+		count = 1
 	count += player.room_extra_hazards
 	for i in range(count):
 		var at := Vector2(
 			rng.randf_range(arena_rect.position.x + 80.0, arena_rect.end.x - 80.0),
 			rng.randf_range(arena_rect.position.y + 40.0, arena_rect.end.y - 40.0)
 		)
-		_spawn_hazard_at(at, rad, dmg, "normal")
+		_spawn_hazard_at(at, rad, dmg, "normal", warn)
+	if early:
+		_teach_hazard_tip()
+
+func _teach_hazard_tip() -> void:
+	if _taught_hazard:
+		return
+	_taught_hazard = true
+	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -70), "ZONA · sal antes del flash", Color("4cc9f0"))
 
 func _spawn_extra_hazards_from_mod(rad: float, dmg: float) -> void:
 	for i in range(player.room_extra_hazards):
@@ -348,10 +369,10 @@ func _elite_pattern_for_room() -> String:
 	var idx := int(abs(run.run_seed) + run.current_floor * 3 + run.rooms_completed) % patterns.size()
 	return patterns[idx]
 
-func _spawn_hazard_at(at: Vector2, rad: float, dmg: float, style := "normal") -> void:
+func _spawn_hazard_at(at: Vector2, rad: float, dmg: float, style := "normal", warn_override := -1.0) -> void:
 	var hazard = ARENA_HAZARD.new()
 	actors.add_child(hazard)
-	hazard.setup(player, at, rad, dmg, style)
+	hazard.setup(player, at, rad, dmg, style, warn_override)
 	if style == "normal":
 		VISUALS.float_text(self, at, "ZONA", Color("4cc9f0"))
 

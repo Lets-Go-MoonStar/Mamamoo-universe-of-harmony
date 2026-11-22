@@ -326,6 +326,7 @@ func _on_projectile_hit(member_index: int, _damage: float) -> void:
 	harmony = min(100.0, harmony + (3.0 + chain_level * 1.5) * items.harmony_multiplier() * harmony_path_mult)
 	gain_composure(CombatConstants.COMPOSURE_ON_HIT)
 	_emit_stats()
+	# El peso de golpe lo aplica el enemigo en take_damage; aquí solo cadena.
 
 func gain_composure(amount: float) -> void:
 	composure = minf(CombatConstants.COMPOSURE_MAX, composure + amount * composure_gain_mult * room_composure_mult)
@@ -368,10 +369,11 @@ func receive_damage(amount: float, corruption: bool = false, boss: bool = false)
 	voice = maxf(0.0, voice - taken)
 	items.after_damage()
 	art.action("hurt", 0.18)
-	hurt_flash = 0.22
+	hurt_flash = 0.28
 	if is_inside_tree() and taken > 0.0:
 		VISUALS.float_text(get_parent(), global_position + Vector2(0, -48), "-%d" % int(round(taken)), Color("ff5d5d") if boss or corruption else Color("ff8fa3"))
 		VISUALS.burst(self, VISUALS.STATUS, 2, 6, 55.0, Vector2(0, -12), 0.28)
+		preload("res://scripts/systems/combat_feel.gd").player_hurt(get_parent())
 	invulnerable = 0.45
 	chain_timer = 0.0
 	chain_members.clear()
