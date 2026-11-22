@@ -120,7 +120,7 @@ func setup(scene) -> void:
 func _process(_delta: float) -> void:
 	if not is_instance_valid(system): return
 	var seed_text := "Seed %d" % game.run.run_seed
-	status.text = "Piso %d · Sala %d · %d monedas · Nv %d (EXP %d/100)\nEnergía %d · Escudo %d%s · %s" % [game.run.current_floor, game.room_number, system.coins, system.level, int(system.xp), int(system.energy), int(system.shields[game.player.active_index]), " · AD-LIB" if system.active("adlib") else " · Q: Ad-lib (100 Armonía)", seed_text]
+	status.text = "Piso %d · Sala %d · %d monedas · Nv %d (EXP %d/100)\nEnergía %d · Escudo %d · Compostura %d%%%s · %s" % [game.run.current_floor, game.room_number, system.coins, system.level, int(system.xp), int(system.energy), int(system.shields[game.player.active_index]), int(game.player.composure), " · AD-LIB" if system.active("adlib") else " · Q: Ad-lib (100 Compostura)", seed_text]
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	# Tecla I: abre/cierra el inventario (no cuando hay otra ventana abierta).

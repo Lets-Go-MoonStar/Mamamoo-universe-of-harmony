@@ -186,7 +186,7 @@ func speed_multiplier() -> float:
 	var bonus := 0.10 * count("speed_feather_charm")
 	bonus += 0.06 if player.chain_level >= 3 and count("crown_badge") > 0 else 0.0
 	bonus += 0.10 if active("trio") else 0.0
-	bonus += 0.15 if active("adlib") and count("ad_lib_spark_core") > 0 else 0.0
+	bonus += CombatConstants.ADLIB_SPARK_SPEED if active("adlib") and count("ad_lib_spark_core") > 0 else 0.0
 	return 1.0 + minf(0.35, bonus)
 
 # Multiplicador de generación de Armonía: fragmentos, medallón, trío y
@@ -210,7 +210,7 @@ func damage_multiplier(member: int) -> float:
 		bonus += [0.0, 0.04, 0.08, 0.12, 0.20][clampi(player.chain_level, 0, 4)]
 	bonus += 0.15 if active("duo") else 0.0
 	bonus += 0.20 if active("encore") else 0.0
-	bonus += 0.12 if active("adlib") and count("ad_lib_spark_core") > 0 else 0.0
+	bonus += CombatConstants.ADLIB_SPARK_DAMAGE if active("adlib") and count("ad_lib_spark_core") > 0 else 0.0
 	bonus += 0.12 if active("field") and player.global_position.distance_to(field_center) <= 130.0 else 0.0
 	return 1.0 + minf(1.0, bonus)
 
@@ -239,14 +239,14 @@ func on_switch(previous: int, current: int) -> void:
 		for enemy in get_tree().get_nodes_in_group("enemies"):
 			if enemy.eclipse_time > 0.0 and not enemy.dying:
 				enemy.eclipse_time = 0.0
-				var amount: float = float(player.members[current].damage) * 1.2
+				var amount: float = float(player.members[current].damage) * CombatConstants.ECLIPSE_SWITCH_MULT
 				if current == 3 and enemy.hp / enemy.max_hp < 0.35:
-					amount *= 1.10
+					amount *= 1.0 + CombatConstants.ECLIPSE_HWASA_EXECUTE
 				enemy.take_damage(amount, current)
 				if current == 0:
-					add_shield(0, 0.05)
+					add_shield(0, CombatConstants.ECLIPSE_SOLAR_SHIELD)
 				elif current == 2:
-					area_damage(enemy.global_position, 90.0, 8.0, enemy)
+					area_damage(enemy.global_position, CombatConstants.ECLIPSE_WHEEIN_RADIUS, CombatConstants.ECLIPSE_WHEEIN_PULSE, enemy)
 
 # Al alcanzar Cuarteto en la cadena: onda del potenciador y efectos de la
 # corona del cuarteto (Encore, escudos para Solar y freno masivo de Moonbyul).
@@ -262,17 +262,17 @@ func on_quartet() -> void:
 				if player.global_position.distance_to(enemy.global_position) < 210.0:
 					enemy.apply_slow(5.0, 0.75)
 
-# Ad-lib con Q: consume la Armonía (100) y abre la ventana de 5 s.
+# Ad-lib con Q: consume Compostura (100) y abre la ventana de Ad-lib.
 func start_adlib() -> void:
-	if player.harmony < 100.0 or active("adlib"):
+	if player.composure < CombatConstants.ADLIB_COST or active("adlib"):
 		return
-	player.harmony = 0.0
-	timers.adlib = 5.0
+	player.composure = 0.0
+	timers.adlib = CombatConstants.ADLIB_DURATION
 	adlib_extension = 0.0
 	if count("curtain_call_brooch") > 0:
 		energy = minf(100.0, energy + 25.0)
-		changed.emit()
-		player._emit_stats()
+	changed.emit()
+	player._emit_stats()
 
 # Reacciones de ítems al lanzar una habilidad: el campo de Solar (reliquia)
 # y la superarmadura del talismán de Hwasa.
@@ -308,13 +308,13 @@ func hit(enemy, amount: float, member: int) -> float:
 	if enemy.hp / enemy.max_hp < 0.35: bonus += 0.12 * count("flame_emblem")
 	if enemy.is_boss: bonus += 0.03 * count("boss_seal_fragment")
 	amount *= 1.0 + minf(1.0, bonus)
-	# Critical hits are introduced only by Encore's Hwasa bonus (10% chance).
-	if member == 3 and active("encore") and rng.randf() < 0.10:
-		amount *= 1.65
+	# Critical hits are introduced only by Encore's Hwasa bonus.
+	if member == 3 and active("encore") and rng.randf() < CombatConstants.ENCORE_CRIT_CHANCE:
+		amount *= CombatConstants.ENCORE_CRIT_MULT
 	if member == 1 and enemy.slow_timer > 0.0 and count("moonbyul_lunar_dagger_sigil") > 0:
-		enemy.eclipse_time = 5.0
+		enemy.eclipse_time = CombatConstants.ECLIPSE_DURATION
 	if member == 3 and count("hwasa_fire_rose_relic") > 0:
-		enemy.burn_time = 4.0
+		enemy.burn_time = CombatConstants.ARDOR_DURATION
 	var reaction: bool = enemy.last_member >= 0 and enemy.last_member != member and (enemy.slow_timer > 0.0 or enemy.burn_time > 0.0)
 	enemy.last_member = member
 	var propagate := member == 2 and reaction and ((count("wheein_melody_droplet_relic") > 0 and not active("note_cd")) or active("encore"))
@@ -322,7 +322,7 @@ func hit(enemy, amount: float, member: int) -> float:
 	var burning: bool = enemy.burn_time > 0.0
 	enemy.take_damage(amount, member)
 	if propagate:
-		timers.note_cd = 3.0
+		timers.note_cd = CombatConstants.NOTE_CD
 		var nearest = null
 		var distance := INF
 		for other in get_tree().get_nodes_in_group("enemies"):
@@ -330,10 +330,12 @@ func hit(enemy, amount: float, member: int) -> float:
 				nearest = other
 				distance = origin.distance_to(other.global_position)
 		if nearest != null:
-			if burning: nearest.burn_time = maxf(nearest.burn_time, 1.4)
-			nearest.take_damage(amount * (0.35 if count("wheein_melody_droplet_relic") > 0 else 0.15), -1)
+			if burning:
+				nearest.burn_time = maxf(nearest.burn_time, CombatConstants.ARDOR_NOTE_SPREAD)
+			var note_ratio: float = CombatConstants.REACTION_NOTE_RELIC if count("wheein_melody_droplet_relic") > 0 else CombatConstants.REACTION_NOTE_BASE
+			nearest.take_damage(amount * note_ratio, -1)
 	if enemy.dying and burning and count("hwasa_fire_rose_relic") > 0:
-		area_damage(origin, 110.0, amount * 0.40, enemy)
+		area_damage(origin, CombatConstants.ARDOR_EXPLOSION_RADIUS, amount * CombatConstants.ARDOR_EXPLOSION_RATIO, enemy)
 	return amount
 
 # Al derrotar a un enemigo: moneda, experiencia (más contra Eclipse, con
@@ -347,11 +349,13 @@ func on_kill(enemy) -> void:
 		xp -= 100.0
 		level += 1
 		reward_requested.emit("level")
-	if active("adlib") and count("ad_lib_spark_core") > 0 and adlib_extension < 3.0:
-		var extension := minf(0.5, 3.0 - adlib_extension)
+	player.gain_composure(CombatConstants.COMPOSURE_ON_KILL)
+	if active("adlib") and count("ad_lib_spark_core") > 0 and adlib_extension < CombatConstants.ADLIB_EXTEND_CAP:
+		var extension := minf(CombatConstants.ADLIB_EXTEND_PER_KILL, CombatConstants.ADLIB_EXTEND_CAP - adlib_extension)
 		timers.adlib += extension
 		adlib_extension += extension
 	changed.emit()
+	player._emit_stats()
 
 # Aplica resistencias a un debuff de control: el talismán reduce su fuerza
 # (y más en Moonbyul), Wheein acorta la duración y Hwasa con superarmadura

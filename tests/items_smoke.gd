@@ -113,10 +113,11 @@ func run() -> void:
 	check(not items.revive(), "Pluma no revive una segunda vez")
 	check(player.member_voice[0] > 0.0, "Tras revive hay Voz > 0")
 
-	# Ad-lib.
-	player.harmony = 100.0
+	# Ad-lib (consume Compostura, no Armonía).
+	player.composure = 100.0
 	items.start_adlib()
 	check(items.active("adlib"), "Ad-lib activa ventana de 5 s")
+	check(player.composure == 0.0, "Ad-lib consume Compostura a 0")
 
 	player.set_physics_process(false)
 	player.team_defeated = false
@@ -125,7 +126,7 @@ func run() -> void:
 	items.owned.clear()
 	items.owned["curtain_call_brooch"] = 1
 	items.energy = 40.0
-	player.harmony = 100.0
+	player.composure = 100.0
 	items.timers.erase("adlib")
 	items.start_adlib()
 	check(items.energy >= 65.0, "Curtain Call Brooch otorga 25 energía al activar Ad-lib")

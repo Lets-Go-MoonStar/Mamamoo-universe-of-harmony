@@ -17,7 +17,7 @@ included; all visuals are provided assets of the project.
   The run ends only when all four fall.
 - **Harmony Chain**: Solo -> Duet -> Trio -> Quartet by landing attacks with
   distinct members within a short window.
-- **Harmony** meter (Q activates **Ad-lib** at 100%).
+- **Harmony** meter (chain) and **Composure** meter (Q activates **Ad-lib** at 100).
 - **Abilities** (E, costs 100 energy) and **Tag Skills** on member switch.
 - Dodge (Shift) with invulnerability window.
 
@@ -59,7 +59,7 @@ included; all visuals are provided assets of the project.
 - **Arrows**: move
 - **W / A / S / D**: shoot up / left / down / right (last key held wins)
 - **E**: ability (requires 100 energy)
-- **Q**: Ad-lib (requires 100 Harmony)
+- **Q**: Ad-lib (requires 100 Composure)
 - **Shift**: dodge
 - **1 / 2 / 3 / 4**: switch member
 - **I**: inventory and catalog
@@ -131,5 +131,5 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 
 1. ~~Two more legendary relics so the celestial chest always offers three.~~
 2. ~~Maps/mapa visual del piso y reselección de ruta antes de entrar.~~ (hecho: `scripts/floor_map.gd` en el panel de rutas)
-3. Numbers definitivos de Composure / Ad-lib / reacciones elementales.
+3. ~~Numbers definitivos de Composure / Ad-lib / reacciones elementales.~~ (`scripts/systems/combat_constants.gd`)
 4. Persistencia de sesión (inventario entre partidas).
