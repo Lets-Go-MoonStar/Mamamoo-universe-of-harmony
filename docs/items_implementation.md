@@ -61,6 +61,9 @@ Los objetos y recursos son de la partida actual. La partida en curso se guarda e
 inventario, recursos, Voz, Compostura y progreso de piso/sala. **R** (misma seed)
 y **M** (nueva seed) borran la sesión; la derrota también.
 
+Salas **EVENT** usan `EventCatalog` (varias opciones con riesgo/beneficio). Salas
+**REWARD** ofrecen objeto (pool mejorada), botín rápido o descanso breve.
+
 ## Rarezas de las recompensas (sistema procedural)
 
 Desde la implementación del hito procedural, las probabilidades de rareza de las

@@ -31,17 +31,17 @@ func _initialize() -> void:
 		assert(b.phase_thresholds().size() >= 2)
 	print("Jefes OK:", bosses.size())
 
-	var floors := [1, 2, 3]
-	for f in floors:
-		var cfg: FloorConfig = FloorConfig.make_default(f)
-		if ResourceLoader.exists("res://resources/floor_configs/floor_%d.tres" % f):
-			cfg = load("res://resources/floor_configs/floor_%d.tres" % f)
+	for f in range(1, 14):
+		var path := "res://resources/floor_configs/floor_%d.tres" % f
+		assert(ResourceLoader.exists(path), "Falta floor_%d.tres" % f)
+		var cfg: FloorConfig = load(path)
 		assert(cfg.floor_number == f)
+		assert(not cfg.enemy_pool.is_empty() and not cfg.boss_pool.is_empty())
 
 	for seed in [0, 1, 42, 987654, 20260920]:
 		var run := RunManager.new()
 		run.new_run(seed)
-		for f in range(1, 4):
+		for f in [1, 2, 3, 7, 13]:
 			run.goto_floor(f)
 			assert(run.floor_map.size() >= 2, "Piso sin salas")
 			_assert_valid_graph(run)
@@ -59,7 +59,7 @@ func _initialize() -> void:
 			assert(run.pick_boss() is BossData, "sin jefe piso %d" % f)
 			print("  seed=%d piso=%d salas=%d pool=%d" % [seed, f, run.floor_map.size(), pool.size()])
 		run.queue_free()
-	print("### VALIDACION OK (5 seeds x 3 pisos) ###")
+	print("### VALIDACION OK (5 seeds x pisos 1/2/3/7/13) ###")
 	quit(0)
 
 func _assert_valid_graph(run: RunManager) -> void:

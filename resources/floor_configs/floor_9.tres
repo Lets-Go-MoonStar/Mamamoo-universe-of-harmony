@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/floor_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+floor_number = 9
+min_rooms = 20
+max_rooms = 25
+difficulty_multiplier = 1.640
+damage_multiplier = 1.440
+enemy_budget = 11
+elite_chance = 0.29
+event_chance = 0.14
+shop_chance = 0.15
+reward_chance = 0.14
+boss_pool = Array[String](["res://resources/boss_pool/eclipse.tres"])
+enemy_pool = Array[String](["res://resources/enemy_pool/echo.tres", "res://resources/enemy_pool/echo_swift.tres", "res://resources/enemy_pool/feedback.tres", "res://resources/enemy_pool/mute.tres", "res://resources/enemy_pool/echo_armored.tres", "res://resources/enemy_pool/tuner.tres", "res://resources/enemy_pool/echo_corrupted.tres", "res://resources/enemy_pool/echo_elite.tres", "res://resources/enemy_pool/feedback_elite.tres", "res://resources/enemy_pool/mute_elite.tres"])
+biome_index = 8
+route_branch_chance = 0.62

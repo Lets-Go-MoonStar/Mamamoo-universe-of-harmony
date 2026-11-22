@@ -2,6 +2,8 @@ extends SceneTree
 # Flujo de recompensas / rutas / servicios entre salas.
 # godot --headless --path . --fixed-fps 60 --script res://tests/rewards_flow.gd
 
+const SESSION = preload("res://scripts/systems/session_store.gd")
+
 var failures := 0
 var checks := 0
 
@@ -20,6 +22,9 @@ func frames(count: int) -> void:
 	await process_frame
 
 func run() -> void:
+	# Evita que una sesión local deje el inventario lleno / overlay raro.
+	SESSION.path_override = "user://mamamoo_session_rewards_test.json"
+	SESSION.clear()
 	var scene = load("res://scenes/Main.tscn").instantiate()
 	root.add_child(scene)
 	current_scene = scene
@@ -83,5 +88,7 @@ func run() -> void:
 	check(boss_w["COMMON"] == 0.0 and combat_w["COMMON"] > 0.0, "Jefe y combate usan pesos distintos")
 	check(RewardManager.allowed_in("boss", "COMMON") == false, "COMMON no permitido en recompensa de jefe")
 
+	SESSION.clear()
+	SESSION.path_override = ""
 	print("REWARDS FLOW: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

@@ -22,9 +22,9 @@ included; all visuals are provided assets of the project.
 - Dodge (Shift) with invulnerability window.
 
 **Dungeon procedural (sección 1-9 de la especificación)**
-- **Pisos** data-driven: `resources/floor_configs/floor_1..3.tres`; de 4 a 13
-  se genera una configuración por defecto respetando los rangos del GDD y el
-  escalado `hp = 1+(piso-1)*0.08`, `dmg = 1+(piso-1)*0.06`.
+- **Pisos** data-driven: `resources/floor_configs/floor_1..13.tres` (pools y
+  presupuestos por banda GDD). Fallback `FloorConfig.make_default` si falta el
+  `.tres`. Escalado `hp = 1+(piso-1)*0.08`, `dmg = 1+(piso-1)*0.055`.
 - **Grafo de salas** por piso (`RoomData` + `FloorGenerator`): siempre existe
   una ruta válida `START -> ... -> BOSS`, con rutas alternativas que reconvergen
   (sin bucles ni callejones). Tipos: COMBAT, ELITE, EVENT, REWARD, SHOP, REST y
@@ -134,3 +134,5 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 2. ~~Maps/mapa visual del piso y reselección de ruta antes de entrar.~~ (hecho: `scripts/floor_map.gd` en el panel de rutas)
 3. ~~Numbers definitivos de Composure / Ad-lib / reacciones elementales.~~ (`scripts/systems/combat_constants.gd`)
 4. ~~Persistencia de sesión (inventario entre partidas).~~ (`scripts/systems/session_store.gd`, `user://mamamoo_session.json`)
+5. ~~EVENT/REWARD ricos + floors 4-13 + balance 1-3.~~ (`EventCatalog`, `open_reward_special`, `floor_1..13.tres`)
+6. Arte final (bloqueado: falta el pack ilustrado; placeholders con `--force` mejorados)

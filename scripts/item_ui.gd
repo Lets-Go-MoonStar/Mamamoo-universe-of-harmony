@@ -458,14 +458,49 @@ func _add_floor_map() -> void:
 
 # --- Salas fuera de combate -------------------------------------------------
 
-# Evento aleatorio con una única decisión (una sala EVENT de la ruta).
+# Evento con una sola acción (compatibilidad).
 func open_event(text: String, effect: Callable) -> void:
+	open_event_choices(text, [{"text": "Aceptar", "fn": effect}])
+
+# Evento con varias opciones (salas EVENT del catálogo).
+func open_event_choices(title: String, choices: Array) -> void:
 	current_kind = "event"
 	clear()
 	label("EVENTO")
-	label(text, content, 16)
-	button("Aceptar", func():
-		effect.call()
+	label(title, content, 16)
+	for choice in choices:
+		var entry: Dictionary = choice
+		var choice_text: String = str(entry.get("text", "…"))
+		var effect: Callable = entry.get("fn", Callable())
+		button(choice_text, func():
+			if effect.is_valid():
+				effect.call()
+			game.finish_non_combat_room())
+	show_panel()
+
+# Sala REWARD: elige entre objeto (pool mejorada), botín o descanso.
+func open_reward_special() -> void:
+	current_kind = "reward_special"
+	clear()
+	label("SALA DE RECOMPENSA")
+	label("Escoge cómo cobrar el botín de esta sala.", content, 15)
+	button("Elegir un objeto (rareza mejorada)", func():
+		game.run.complete_current()
+		game.awaiting_reward = true
+		game.room_number = game.run.rooms_completed + 1
+		current_kind = "reward"
+		roll_choices()
+		show_choices()
+		game._autosave_session())
+	button("Botín rápido (+10 monedas, +1 llave)", func():
+		system.coins += 10
+		system.keys += 1
+		game.player._emit_stats()
+		game.finish_non_combat_room())
+	button("Descanso breve (+20% Voz, +1 ticket)", func():
+		system.heal_team(0.20)
+		system.tickets += 1
+		game.player._emit_stats()
 		game.finish_non_combat_room())
 	show_panel()
 

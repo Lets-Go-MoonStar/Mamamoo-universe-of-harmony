@@ -24,6 +24,8 @@ var awaiting_floor_start := false
 const COMBAT_HUD = preload("res://scripts/combat_hud.gd")
 const RUN_MANAGER = preload("res://scripts/systems/run_manager.gd")
 const SESSION = preload("res://scripts/systems/session_store.gd")
+const EVENT_CATALOG = preload("res://scripts/systems/event_catalog.gd")
+const ITEM_CATALOG = preload("res://scripts/item_catalog.gd")
 
 const BACKGROUNDS = [
 	preload("res://assets/backgrounds/eclipse_arena_background.png"),
@@ -316,12 +318,10 @@ func start_after_boss() -> void:
 
 # --- Salas fuera de combate -------------------------------------------------
 
-# Recompensa gratuita (tipo "reward", pesos mejores que combate normal).
+# Recompensa: el jugador elige objeto mejorado, botín o descanso.
 func _enter_reward_room() -> void:
-	run.complete_current()
 	awaiting_reward = true
-	item_ui.queue_reward("reward")
-	room_number = run.rooms_completed + 1
+	item_ui.open_reward_special()
 
 # Descanso: cura un 30% del equipo estando en la sala REST.
 func _enter_rest_room() -> void:
@@ -332,25 +332,91 @@ func _enter_rest_room() -> void:
 	item_ui.show_routes()
 	room_number = run.rooms_completed + 1
 
-# Evento aleatorio con efecto único (caso de uso tipo "sala EVENT").
+# Evento: catálogo con varias decisiones (riesgo/beneficio).
 func _enter_event_room() -> void:
-	var options := [
-		{"text": "Una palabra de consuelo cura a todo el equipo (+25%% de Voz)", "fn": _event_heal},
-		{"text": "Hallas monedas perdidas (+8 monedas)", "fn": _event_coins},
-		{"text": "Una llave antigua aparece en tu bolsillo (+1 llave)", "fn": _event_key},
-	]
-	var pick: Dictionary = options[run.rng.randi_range(0, options.size() - 1)]
-	item_ui.open_event(pick["text"], pick["fn"])
+	var catalog: Array = EVENT_CATALOG.all()
+	var pick: Dictionary = catalog[run.rng.randi_range(0, catalog.size() - 1)]
+	var choices: Array = []
+	for raw in pick.get("choices", []):
+		var entry: Dictionary = raw
+		var effect_id: String = str(entry.get("effect", "noop"))
+		choices.append({
+			"text": str(entry.get("text", "…")),
+			"fn": _event_effect_callable(effect_id),
+		})
+	item_ui.open_event_choices(str(pick.get("title", "EVENTO")), choices)
 
-func _event_heal() -> void:
-	player.items.heal_team(0.25)
+func _event_effect_callable(effect_id: String) -> Callable:
+	return func(): _apply_event_effect(effect_id)
+
+func _apply_event_effect(effect_id: String) -> void:
+	match effect_id:
+		"heal_30":
+			player.items.heal_team(0.30)
+		"heal_15":
+			player.items.heal_team(0.15)
+		"pay_ticket":
+			if player.items.coins >= 5:
+				player.items.coins -= 5
+				player.items.tickets += 1
+		"composure_25":
+			player.gain_composure(25.0)
+		"composure_20":
+			player.gain_composure(20.0)
+		"composure_15":
+			player.gain_composure(15.0)
+		"coins_hurt":
+			player.items.coins += 12
+			player.voice = maxf(1.0, player.voice - 20.0)
+		"buy_key":
+			if player.items.coins >= 8:
+				player.items.coins -= 8
+				player.items.keys += 1
+		"random_item":
+			_grant_random_item("")
+		"buy_potion":
+			if player.items.coins >= 6 and player.items.can_acquire("heart_recovery_potion"):
+				player.items.coins -= 6
+				player.items.acquire("heart_recovery_potion")
+		"challenge":
+			player.voice = maxf(1.0, player.voice - 15.0)
+			player.items.keys += 1
+			player.gain_composure(40.0)
+		"xp_40":
+			player.items.xp += 40.0
+			while player.items.xp >= 100.0:
+				player.items.xp -= 100.0
+				player.items.level += 1
+				player.items.reward_requested.emit("level")
+		"uncommon_item":
+			_grant_random_item("UNCOMMON")
+		"sync":
+			player.harmony = minf(100.0, player.harmony + 20.0)
+			player.gain_composure(20.0)
+		"coins_8":
+			player.items.coins += 8
+		_:
+			pass
 	player._emit_stats()
 
-func _event_coins() -> void:
-	player.items.coins += 8
-
-func _event_key() -> void:
-	player.items.keys += 1
+# Otorga un ítem adquirible al azar; min_rarity filtra rareza mínima opcional.
+func _grant_random_item(min_rarity: String) -> void:
+	const ORDER := ["COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY"]
+	var min_rank := ORDER.find(min_rarity) if not min_rarity.is_empty() else 0
+	var pool: Array[String] = []
+	for entry in ITEM_CATALOG.all():
+		if entry.id in ["treasure_chest", "legendary_celestial_chest"]:
+			continue
+		if not player.items.can_acquire(entry.id):
+			continue
+		var rank := ORDER.find(str(entry.rarity))
+		if rank < min_rank:
+			continue
+		pool.append(entry.id)
+	if pool.is_empty():
+		player.items.coins += 5
+		return
+	player.items.acquire(pool[run.rng.randi_range(0, pool.size() - 1)])
 
 # Tienda: tres ítems con precio por rareza; la salida activa la ruta.
 func _enter_shop_room() -> void:
