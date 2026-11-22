@@ -28,9 +28,9 @@ Hay salas élite cada tres salas y jefe cada cinco. Las élite garantizan una op
 ## Valores de prototipo donde la fuente no concreta reglas
 
 - Habilidades: 100 de energía máxima; coste 100, regeneración base 20/s. La batería multiplica la regeneración +20% por unidad. El CD se aplica además del requisito de energía. Así la batería es útil junto a reducciones de cooldown. Echo no paga energía ni reinicia cooldown otra vez.
-- Ad-lib: `Q` consume 100 de Armonía y abre una ventana de 5 s; todavía no existe el medidor independiente de Compostura. El núcleo activa sus bonus durante esta ventana; las bajas extienden hasta 3 s en total.
-- Reacción elemental: golpe de una integrante distinta a la anterior sobre un enemigo controlado o con Ardor. La nota de Wheein busca el siguiente enemigo más cercano. La propagación no genera nuevas propagaciones, recompensas adicionales ni Harmony Chain por sí misma.
-- Ardor dura 4 s y habilita la explosión. No inflige daño periódico porque la fuente no especifica una cantidad. Explosión: radio 110, daño 40% del golpe final; sin recursión.
+- Compostura / Ad-lib (números en `scripts/systems/combat_constants.gd`): medidor 0–100 aparte de Armonía. Se gana +4 por golpe, +5 por nuevo eslabón de cadena, +15 al Cuarteto y +8 por baja. `Q` consume 100 de Compostura y abre Ad-lib 5 s. Con Ad-lib Spark Core: +15% velocidad, +12% daño; cada baja extiende +0.5 s (tope +3 s).
+- Reacción elemental: golpe de una integrante distinta a la anterior sobre un enemigo controlado o con Ardor. Nota de Wheein: 15% base / 35% con reliquia, CD 3 s, busca el más cercano. Sin re-propagación ni Harmony Chain extra.
+- Ardor: 4 s, DoT 3/s, explosión al morir radio 110 al 40% del golpe final; sin recursión. Eclipse: 5 s, al cambiar consume 120% del daño básico de la entrante.
 - Rare Cosmic Orb: cuenta cambios manuales, 20 de daño en radio 160 cada cuatro cambios; otorga exactamente 8 puntos de Armonía.
 - Harmony Chain Enhancer: onda de 10 de daño en radio 170 al pasar a Cuarteto. No se dispara de nuevo por cada golpe mientras siga el mismo Cuarteto.
 - Solar: campo radio 130, cada integrante recibe un escudo una vez por campo; salir del campo elimina el bonus de daño, no renueva escudos consumidos.

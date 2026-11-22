@@ -155,6 +155,9 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	# Tiempos de estado (quemadura, eclipse), cooldowns y flash.
+	if burn_time > 0.0 and not dying:
+		# Ardor: DoT ligero definitivo (CombatConstants.ARDOR_DOT_PER_SEC).
+		take_damage(CombatConstants.ARDOR_DOT_PER_SEC * delta, -1)
 	burn_time = maxf(0.0, burn_time - delta)
 	eclipse_time = maxf(0.0, eclipse_time - delta)
 	queue_redraw()

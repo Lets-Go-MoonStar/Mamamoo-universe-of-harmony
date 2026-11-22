@@ -50,6 +50,8 @@ var voice: float:
 	set(value):
 		member_voice[active_index] = clampf(value, 0.0, voice_max)
 var harmony := 0.0
+# Compostura: medidor que alimenta Ad-lib (Q). Independiente de Armonía/cadena.
+var composure := 0.0
 # Cooldowns: ataque, habilidad y esquiva; invulnerable = segundos sin recibir daño.
 var attack_cd := 0.0
 var ability_cd := 0.0
@@ -281,7 +283,11 @@ func _on_projectile_hit(member_index: int, _damage: float) -> void:
 		return
 	_register_chain_hit(member_index)
 	harmony = min(100.0, harmony + (3.0 + chain_level * 1.5) * items.harmony_multiplier())
+	gain_composure(CombatConstants.COMPOSURE_ON_HIT)
 	_emit_stats()
+
+func gain_composure(amount: float) -> void:
+	composure = minf(CombatConstants.COMPOSURE_MAX, composure + amount)
 
 # Actualiza la cadena de Armonía: golpes de integrantes distintas suman nivel;
 # al llegar a Cuarteto otorga Armonía extra y activa efectos de cuarteto.
@@ -290,11 +296,14 @@ func _register_chain_hit(member_index: int) -> void:
 		chain_members.clear()
 	if not chain_members.has(member_index):
 		chain_members.append(member_index)
+		if chain_members.size() > chain_level:
+			gain_composure(CombatConstants.COMPOSURE_ON_CHAIN_STEP)
 	var previous_level := chain_level
 	chain_level = chain_members.size()
 	chain_timer = chain_window
 	if chain_level >= 4 and previous_level < 4:
 		harmony = min(100.0, harmony + 18.0 * items.harmony_multiplier())
+		gain_composure(CombatConstants.COMPOSURE_ON_QUARTET)
 		items.on_quartet()
 	chain_changed.emit(chain_level, chain_timer)
 
@@ -369,6 +378,7 @@ func _emit_stats() -> void:
 		"member_voice": member_voice.duplicate(),
 		"team_defeated": team_defeated,
 		"harmony": harmony,
+		"composure": composure,
 		"energy": items.energy,
 		"shield": items.shields[active_index],
 		"ability_cd": ability_cd,

@@ -113,7 +113,7 @@ func update_stats(data: Dictionary, defeated: int) -> void:
 	voice_bar.value = maxf(0.0, data["voice"])
 	harmony_bar.value = data["harmony"]
 	voice_text.text = "VOZ  %d / %d" % [maxi(0, int(data["voice"])), int(data["voice_max"])]
-	harmony_text.text = "ARMONÍA  %d%%" % int(data["harmony"])
+	harmony_text.text = "ARMONÍA  %d%%   COMPOSTURA  %d%%" % [int(data["harmony"]), int(data.get("composure", 0.0))]
 	member_text.text = "%s     KO %d" % [data["member_name"], defeated]
 	member_text.modulate = data["member_color"]
 	cooldown_text.text = "Habilidad: %s    Esquiva: %s" % [("sin energía" if data["ability_cd"] <= 0.0 and data.get("energy", 100.0) < 100.0 else cooldown(data["ability_cd"])), cooldown(data["dodge_cd"])]
