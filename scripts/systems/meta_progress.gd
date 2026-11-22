@@ -20,25 +20,25 @@ const PATH_DEFS := {
 	"solar": {
 		"cost": 45,
 		"label": "Ruta Solar",
-		"desc": "Habilidades +18% daño · +12 Compostura al usar E.",
+		"desc": "Habilidades +18% · +12 Compostura al E · curar da Compostura.",
 		"member": 0,
 	},
 	"moonbyul": {
 		"cost": 45,
 		"label": "Ruta Moonbyul",
-		"desc": "Esquiva −20% CD · velocidad +10%.",
+		"desc": "Esquiva −22% CD · vel +12% · tras esquivar, disparo +22%.",
 		"member": 1,
 	},
 	"wheein": {
 		"cost": 45,
 		"label": "Ruta Wheein",
-		"desc": "Armonía +25% · al cambiar cura 4 Voz.",
+		"desc": "Armonía +25% · switch cura 4 · cadena dura +0.5s.",
 		"member": 2,
 	},
 	"hwasa": {
 		"cost": 45,
 		"label": "Ruta Hwasa",
-		"desc": "Compostura por kill +60% · daño de Ad-lib +12%.",
+		"desc": "Kill Compostura +45% · Ad-lib +10% · a Compostura alta +daño.",
 		"member": 3,
 	},
 }

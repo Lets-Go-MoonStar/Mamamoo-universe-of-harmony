@@ -11,6 +11,8 @@ class_name HarmonyPlayer
 extends CharacterBody2D
 
 const VISUALS = preload("res://scripts/visual_assets.gd")
+const SFX = preload("res://scripts/systems/sfx.gd")
+const MemberIdentity = preload("res://scripts/systems/member_identity.gd")
 
 signal stats_changed(data: Dictionary)
 signal chain_changed(level: int, timer: float)
@@ -32,10 +34,10 @@ const PROJECTILE = preload("res://scripts/projectile.gd")
 # Datos estáticos de las 4 integrantes: nombre, color, velocidad,
 # daño base y cadencia de disparo (rate, en segundos).
 var members := [
-	{"name":"SOLAR // SUN","color":Color("ffd166"),"speed":260.0,"damage":15.0,"rate":0.28},
-	{"name":"MOONBYUL // MOON","color":Color("c77dff"),"speed":300.0,"damage":11.0,"rate":0.20},
-	{"name":"WHEEIN // AQUA","color":Color("4cc9f0"),"speed":275.0,"damage":13.0,"rate":0.24},
-	{"name":"HWASA // EMBER","color":Color("ff5d5d"),"speed":245.0,"damage":19.0,"rate":0.38}
+	{"name":"SOLAR","color":Color("ffd166"),"speed":260.0,"damage":15.0,"rate":0.28},
+	{"name":"MOONBYUL","color":Color("c77dff"),"speed":300.0,"damage":11.0,"rate":0.20},
+	{"name":"WHEEIN","color":Color("4cc9f0"),"speed":275.0,"damage":13.0,"rate":0.24},
+	{"name":"HWASA","color":Color("ff5d5d"),"speed":245.0,"damage":19.0,"rate":0.38}
 ]
 
 var active_index := 0
@@ -64,6 +66,21 @@ var speed_path_mult := 1.0
 var harmony_path_mult := 1.0
 var kill_composure_mult := 1.0
 var adlib_damage_mult := 1.0
+# Buff de evento path_empower (0–2) y sinergias de ruta v2.
+var path_empower := 0
+var dodge_shot_boost := 0.0
+# Modifiers de sala (capa de variedad).
+var room_mod_id := ""
+var room_player_speed_mult := 1.0
+var room_damage_dealt_mult := 1.0
+var room_damage_taken_mult := 1.0
+var room_composure_mult := 1.0
+var room_ability_cd_mult := 1.0
+var room_harmony_drain := 0.0
+var room_kill_composure_mult := 1.0
+var room_adlib_damage_mult := 1.0
+var room_enemy_speed_mult := 1.0
+var room_extra_hazards := 0
 # Cooldowns: ataque, habilidad y esquiva; invulnerable = segundos sin recibir daño.
 var attack_cd := 0.0
 var ability_cd := 0.0
@@ -112,6 +129,9 @@ func _physics_process(delta: float) -> void:
 	dodge_cd = max(dodge_cd - delta, 0.0)
 	invulnerable = max(invulnerable - delta, 0.0)
 	hurt_flash = maxf(0.0, hurt_flash - delta)
+	dodge_shot_boost = maxf(0.0, dodge_shot_boost - delta)
+	if room_harmony_drain > 0.0 and harmony > 0.0:
+		harmony = maxf(0.0, harmony - room_harmony_drain * delta)
 	_update_chain(delta)
 	_update_shooting_direction()
 	_handle_switch_inputs()
@@ -129,7 +149,7 @@ func _physics_process(delta: float) -> void:
 # multiplicadores de ítems y la ralentización activa.
 func _handle_movement() -> void:
 	var input_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = input_vec * float(members[active_index]["speed"]) * items.speed_multiplier() * speed_path_mult * (1.0 - slow_strength if slow_time > 0.0 else 1.0)
+	velocity = input_vec * float(members[active_index]["speed"]) * items.speed_multiplier() * speed_path_mult * room_player_speed_mult * (1.0 - slow_strength if slow_time > 0.0 else 1.0)
 
 # Actualiza la dirección de disparo en función de las teclas WASD mantenidas:
 # el orden del array guarda la más reciente (gana al soltar de atrás hacia delante).
@@ -162,7 +182,7 @@ func _basic_attack() -> void:
 	var projectile := PROJECTILE.new()
 	projectile.global_position = global_position + aim_dir * 24.0
 	projectile.member_index = active_index
-	projectile.damage = float(members[active_index]["damage"]) * items.damage_multiplier(active_index)
+	projectile.damage = float(members[active_index]["damage"]) * items.damage_multiplier(active_index) * room_damage_dealt_mult
 	projectile.item_effects = items
 	projectile.projectile_color = members[active_index]["color"]
 	projectile.velocity = aim_dir * (620.0 if active_index != 3 else 500.0)
@@ -181,8 +201,9 @@ func _use_ability(repeat: bool = false) -> void:
 		return
 	if not repeat:
 		items.energy -= 100.0
-		ability_cd = items.ability_cooldown()
+		ability_cd = items.ability_cooldown() * room_ability_cd_mult
 		items.on_ability(active_index)
+		SFX.play(MemberIdentity.sfx_for_path(MemberIdentity.PATHS[active_index]))
 	cast_scale = (0.5 if repeat else 1.0) * (1.0 + 0.20 * items.skill_ranks[active_index]) * ability_damage_mult
 	art.action("ability", 0.45)
 	VISUALS.flash(self, VISUALS.cell(VISUALS.COMBAT, active_index, 3, 4, 6), 100.0, Vector2(0, -24))
@@ -220,6 +241,8 @@ func _dodge() -> void:
 	art.action("dodge", 0.23)
 	dodge_cd = 1.05 * dodge_cd_mult
 	invulnerable = 0.22
+	if meta_path == "moonbyul":
+		dodge_shot_boost = 1.5
 	var move_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction := move_vec.normalized() if move_vec.length() > 0.0 else aim_dir
 	global_position += direction * 95.0 * (1.0 + 0.08 * items.count("speed_feather_charm")) * speed_path_mult
@@ -234,6 +257,7 @@ func switch_to(index: int) -> void:
 	var previous := active_index
 	_activate_member(index)
 	items.on_switch(previous, index)
+	SFX.play(MemberIdentity.sfx_for_path(MemberIdentity.PATHS[index]))
 	if meta_path == "wheein":
 		items.heal_member(index, 4.0)
 	_trigger_tag_skill(index)
@@ -304,7 +328,7 @@ func _on_projectile_hit(member_index: int, _damage: float) -> void:
 	_emit_stats()
 
 func gain_composure(amount: float) -> void:
-	composure = minf(CombatConstants.COMPOSURE_MAX, composure + amount * composure_gain_mult)
+	composure = minf(CombatConstants.COMPOSURE_MAX, composure + amount * composure_gain_mult * room_composure_mult)
 
 # Actualiza la cadena de Armonía: golpes de integrantes distintas suman nivel;
 # al llegar a Cuarteto otorga Armonía extra y activa efectos de cuarteto.
@@ -340,7 +364,7 @@ func _update_chain(delta: float) -> void:
 func receive_damage(amount: float, corruption: bool = false, boss: bool = false) -> void:
 	if team_defeated or invulnerable > 0.0 or voice <= 0.0:
 		return
-	var taken: float = items.absorb(amount, corruption, boss)
+	var taken: float = items.absorb(amount * room_damage_taken_mult, corruption, boss)
 	voice = maxf(0.0, voice - taken)
 	items.after_damage()
 	art.action("hurt", 0.18)
@@ -391,8 +415,13 @@ func receive_damage(amount: float, corruption: bool = false, boss: bool = false)
 
 # Emite un resumen de estado para que el HUD e inventario se actualicen.
 func _emit_stats() -> void:
+	var name_label: String = MemberIdentity.hud_label(active_index)
+	if not meta_path.is_empty():
+		name_label = "%s  |  %s" % [name_label, MemberIdentity.path_tagline(meta_path)]
+	if not room_mod_id.is_empty():
+		name_label = "%s  ·  MOD %s" % [name_label, room_mod_id]
 	stats_changed.emit({
-		"member_name": members[active_index]["name"],
+		"member_name": name_label,
 		"member_color": members[active_index]["color"],
 		"active_index": active_index,
 		"voice": voice,

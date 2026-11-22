@@ -45,6 +45,19 @@ static func play(kind: String) -> void:
 			_play_tones([[415.0, 90]])
 		"hazard":
 			_play_tones([[277.0, 60], [349.0, 80]])
+		"setpiece":
+			_play_tones([[466.0, 55], [392.0, 70], [311.0, 90]])
+		"phase":
+			_play_tones([[220.0, 70], [277.0, 80], [330.0, 70], [415.0, 110]])
+		# Acordes por integrante (identidad sonora sin pack real).
+		"solar":
+			_play_tones([[523.0, 55], [659.0, 70], [784.0, 95]])
+		"moonbyul":
+			_play_tones([[392.0, 60], [494.0, 70], [587.0, 100]])
+		"wheein":
+			_play_tones([[440.0, 50], [554.0, 65], [659.0, 80], [880.0, 70]])
+		"hwasa":
+			_play_tones([[330.0, 45], [415.0, 55], [494.0, 70], [622.0, 110]])
 		_:
 			_play_tones([[440.0, 70]])
 

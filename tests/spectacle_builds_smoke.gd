@@ -61,7 +61,7 @@ func run() -> void:
 	hazard.warn_time = 0.9
 	hazard.danger_time = 0.5
 	hazard.radius = 50.0
-	check(hazard.warning and hazard.pulses_left == 4, "Hazard arranca en aviso")
+	check(hazard.warning and hazard.pulses_left == CombatConstants.HAZARD_PULSES, "Hazard arranca en aviso")
 
 	var enemy := HarmonyEnemy.new()
 	enemy._begin_telegraph("shot", 0.2)

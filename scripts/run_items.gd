@@ -158,7 +158,12 @@ func heal_member(index: int, amount: float) -> void:
 	if player.member_voice[index] > 0.0:
 		if index == player.active_index and player.member_voice[index] < player.voice_max and amount > 0:
 			VISUALS.burst(player, VISUALS.STATUS, 0, 6, 85.0, Vector2(0, -20))
-		player.member_voice[index] = minf(player.voice_max, player.member_voice[index] + amount * (1.0 + 0.10 * count("voice_amplifier_crystal")))
+		var healed: float = amount * (1.0 + 0.10 * count("voice_amplifier_crystal"))
+		var before: float = float(player.member_voice[index])
+		player.member_voice[index] = minf(player.voice_max, before + healed)
+		# Ruta Solar: curar a la activa genera Compostura (sinergia de build).
+		if player.meta_path == "solar" and index == player.active_index and player.member_voice[index] > before:
+			player.gain_composure(CombatConstants.SOLAR_HEAL_COMPOSURE)
 
 # Cura a las integrantes vivas con una fracción de la Voz máxima (no revive).
 func heal_team(fraction: float) -> void:
@@ -274,6 +279,12 @@ func damage_multiplier(member: int) -> float:
 	bonus += 0.12 if active("field") and player.global_position.distance_to(field_center) <= 130.0 else 0.0
 	if active("adlib"):
 		bonus += maxf(0.0, player.adlib_damage_mult - 1.0)
+		bonus += maxf(0.0, player.room_adlib_damage_mult - 1.0)
+	# Rutas v2: Moonbyul tras esquiva; Hwasa con Compostura alta.
+	if player.meta_path == "moonbyul" and player.dodge_shot_boost > 0.0:
+		bonus += CombatConstants.MOONBYUL_DODGE_SHOT
+	if player.meta_path == "hwasa" and player.composure >= 70.0:
+		bonus += CombatConstants.HWASA_HIGH_COMP_BONUS
 	return 1.0 + minf(1.0, bonus)
 
 # Al cambiar de integrante: órbita cósmica rara (daño de área cada 4 cambios),
@@ -412,7 +423,7 @@ func on_kill(enemy) -> void:
 		xp -= 100.0
 		level += 1
 		reward_requested.emit("level")
-	player.gain_composure(CombatConstants.COMPOSURE_ON_KILL * player.kill_composure_mult)
+	player.gain_composure(CombatConstants.COMPOSURE_ON_KILL * player.kill_composure_mult * player.room_kill_composure_mult)
 	if active("adlib") and count("ad_lib_spark_core") > 0 and adlib_extension < CombatConstants.ADLIB_EXTEND_CAP:
 		var extension := minf(CombatConstants.ADLIB_EXTEND_PER_KILL, CombatConstants.ADLIB_EXTEND_CAP - adlib_extension)
 		timers.adlib += extension

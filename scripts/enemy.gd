@@ -190,7 +190,10 @@ func _physics_process(delta: float) -> void:
 	if dying:
 		return
 	var direction := global_position.direction_to(target.global_position)
-	var speed_mult := (slow_factor if slow_timer > 0.0 else 1.0) * (1.3 if enraged else 1.0)
+	var room_spd := 1.0
+	if is_instance_valid(target) and "room_enemy_speed_mult" in target:
+		room_spd = float(target.room_enemy_speed_mult)
+	var speed_mult := (slow_factor if slow_timer > 0.0 else 1.0) * (1.3 if enraged else 1.0) * room_spd
 	dash_cd = maxf(0.0, dash_cd - delta)
 	snare_cd = maxf(0.0, snare_cd - delta)
 	pull_cd = maxf(0.0, pull_cd - delta)
@@ -271,7 +274,10 @@ func _ranged_behavior(delta: float, direction: Vector2, speed_mult: float) -> vo
 		velocity = direction.orthogonal() * move_speed * 0.35 * speed_mult
 	if fired_cd <= 0.0 and distance <= attack_range and distance > 30.0:
 		if (is_boss or _has_ability("telegraph")) and telegraph_time <= 0.0 and telegraph_kind == "":
-			_begin_telegraph("shot", 0.45 if is_boss else 0.35)
+			var shot_warn := 0.35
+			if is_boss:
+				shot_warn = 0.55 if current_phase >= 2 and _has_ability("phase_storm") else 0.45
+			_begin_telegraph("shot", shot_warn)
 		else:
 			_fire_projectile()
 

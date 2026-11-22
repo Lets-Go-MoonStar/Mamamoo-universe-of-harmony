@@ -32,6 +32,31 @@ static func flash(parent: Node, texture: Texture2D, width: float, offset := Vect
 	fade.tween_property(node, "modulate:a", 0.0, 0.45)
 	fade.tween_callback(node.queue_free)
 
+# Pulso a pantalla completa (Polygon2D) — funciona bajo Node2D de combate.
+static func screen_pulse(parent: Node, color: Color = Color("ff5964", 0.35), duration := 0.35) -> void:
+	if parent == null or not parent.is_inside_tree():
+		return
+	var overlay := Polygon2D.new()
+	overlay.color = color
+	overlay.z_index = 20
+	overlay.polygon = PackedVector2Array([
+		Vector2(-40, -40), Vector2(1320, -40), Vector2(1320, 760), Vector2(-40, 760),
+	])
+	parent.add_child(overlay)
+	var tween := overlay.create_tween()
+	tween.tween_property(overlay, "modulate:a", 0.0, duration)
+	tween.tween_callback(overlay.queue_free)
+
+# Sacudida breve del nodo raíz de combate (sin cámara real).
+static func nudge(node: Node2D, amount := 6.0, duration := 0.18) -> void:
+	if node == null or not is_instance_valid(node):
+		return
+	var origin := node.position
+	var tween := node.create_tween()
+	tween.tween_property(node, "position", origin + Vector2(amount, -amount * 0.4), duration * 0.35)
+	tween.tween_property(node, "position", origin + Vector2(-amount * 0.6, amount * 0.3), duration * 0.35)
+	tween.tween_property(node, "position", origin, duration * 0.3)
+
 static func cell(sheet: Texture2D, column: int, row: int, columns: int, rows: int) -> AtlasTexture:
 	var size := sheet.get_size() / Vector2(columns, rows)
 	return region(sheet, Rect2(Vector2(column, row) * size, size))
