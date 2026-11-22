@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "stage_marshal"
+display_name = "Stage Marshal"
+archetype = "tank"
+max_hp = 210.0
+damage = 15.0
+speed = 52.0
+attack_range = 48.0
+attack_cooldown = 1.15
+difficulty_cost = 5
+abilities = Array[String](["snare", "pull", "telegraph", "setpiece"])
+sprite_index = 4
+min_floor = 6
+max_floor = 13
+is_elite = true

@@ -64,6 +64,9 @@ var speed_path_mult := 1.0
 var harmony_path_mult := 1.0
 var kill_composure_mult := 1.0
 var adlib_damage_mult := 1.0
+# Buff de evento path_empower (0–2) y sinergias de ruta v2.
+var path_empower := 0
+var dodge_shot_boost := 0.0
 # Cooldowns: ataque, habilidad y esquiva; invulnerable = segundos sin recibir daño.
 var attack_cd := 0.0
 var ability_cd := 0.0
@@ -112,6 +115,7 @@ func _physics_process(delta: float) -> void:
 	dodge_cd = max(dodge_cd - delta, 0.0)
 	invulnerable = max(invulnerable - delta, 0.0)
 	hurt_flash = maxf(0.0, hurt_flash - delta)
+	dodge_shot_boost = maxf(0.0, dodge_shot_boost - delta)
 	_update_chain(delta)
 	_update_shooting_direction()
 	_handle_switch_inputs()
@@ -220,6 +224,8 @@ func _dodge() -> void:
 	art.action("dodge", 0.23)
 	dodge_cd = 1.05 * dodge_cd_mult
 	invulnerable = 0.22
+	if meta_path == "moonbyul":
+		dodge_shot_boost = 1.5
 	var move_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction := move_vec.normalized() if move_vec.length() > 0.0 else aim_dir
 	global_position += direction * 95.0 * (1.0 + 0.08 * items.count("speed_feather_charm")) * speed_path_mult

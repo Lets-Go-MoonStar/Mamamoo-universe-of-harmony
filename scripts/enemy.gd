@@ -271,7 +271,10 @@ func _ranged_behavior(delta: float, direction: Vector2, speed_mult: float) -> vo
 		velocity = direction.orthogonal() * move_speed * 0.35 * speed_mult
 	if fired_cd <= 0.0 and distance <= attack_range and distance > 30.0:
 		if (is_boss or _has_ability("telegraph")) and telegraph_time <= 0.0 and telegraph_kind == "":
-			_begin_telegraph("shot", 0.45 if is_boss else 0.35)
+			var shot_warn := 0.35
+			if is_boss:
+				shot_warn = 0.55 if current_phase >= 2 and _has_ability("phase_storm") else 0.45
+			_begin_telegraph("shot", shot_warn)
 		else:
 			_fire_projectile()
 

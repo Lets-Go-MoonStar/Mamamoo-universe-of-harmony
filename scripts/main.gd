@@ -275,23 +275,50 @@ func _spawn_wave(wave: Array) -> void:
 		spawned += 1
 
 # Puzzle de sala: zonas con telegraph en combate/élite a partir del piso 4.
+# Élite usa patrón fijo (cruz); combate/boss colocación aleatoria o anillo.
 func _spawn_room_hazards(room: RoomData) -> void:
 	if room == null or room.room_type not in ["COMBAT", "ELITE", "BOSS"]:
 		return
 	if run.current_floor < 4:
 		return
+	var rad := 60.0 + run.current_floor * 1.5
+	var dmg := 7.0 + run.current_floor * 0.4
+	if room.room_type == "ELITE":
+		_spawn_hazard_pattern("cross", 4, rad, dmg + 2.0)
+		VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -80), "SET PIECE", Color("ffd166"))
+		return
 	var count := 1 if room.room_type == "COMBAT" else 2
-	if room.room_type == "BOSS":
-		count = 2
 	for i in range(count):
-		var hazard = ARENA_HAZARD.new()
-		actors.add_child(hazard)
 		var at := Vector2(
 			rng.randf_range(arena_rect.position.x + 80.0, arena_rect.end.x - 80.0),
 			rng.randf_range(arena_rect.position.y + 40.0, arena_rect.end.y - 40.0)
 		)
-		hazard.setup(player, at, 60.0 + run.current_floor * 1.5, 7.0 + run.current_floor * 0.4)
-		VISUALS.float_text(self, at, "ZONA", Color("4cc9f0"))
+		_spawn_hazard_at(at, rad, dmg)
+
+func _spawn_hazard_at(at: Vector2, rad: float, dmg: float) -> void:
+	var hazard = ARENA_HAZARD.new()
+	actors.add_child(hazard)
+	hazard.setup(player, at, rad, dmg)
+	VISUALS.float_text(self, at, "ZONA", Color("4cc9f0"))
+
+func _spawn_hazard_pattern(kind: String, count: int, rad: float, dmg: float) -> void:
+	var center := arena_rect.get_center()
+	var span := mini(arena_rect.size.x, arena_rect.size.y) * 0.28
+	for i in range(count):
+		var at := center
+		match kind:
+			"cross":
+				match i % 4:
+					0: at = center + Vector2(0, -span)
+					1: at = center + Vector2(span, 0)
+					2: at = center + Vector2(0, span)
+					_: at = center + Vector2(-span, 0)
+			"ring":
+				var ang := TAU * float(i) / float(maxi(count, 1)) - PI * 0.5
+				at = center + Vector2(cos(ang), sin(ang)) * span
+			_:
+				at = center
+		_spawn_hazard_at(at, rad, dmg)
 
 # Genera el jefe del piso (usado en salas BOSS) con sus refuerzos.
 func _spawn_boss() -> void:
@@ -304,9 +331,28 @@ func _spawn_boss() -> void:
 	enemy.global_position = Vector2(arena_rect.get_center().x, arena_rect.position.y + 90.0)
 	enemy.add_to_group("enemies")
 	enemy.defeated.connect(_on_enemy_defeated)
+	if not enemy.boss_phase_changed.is_connected(_on_boss_phase_changed):
+		enemy.boss_phase_changed.connect(_on_boss_phase_changed)
 	actors.add_child(enemy)
 	spawned += 1
 	_spawn_room_hazards(run.current_room())
+
+# Set piece de jefe: al cambiar de fase con phase_storm, anillo de zonas.
+func _on_boss_phase_changed(phase: int) -> void:
+	if phase < 2:
+		return
+	SFX.play("warn")
+	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -100), "¡FASE %d!" % phase, Color("ff5964"))
+	var has_storm := false
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node is HarmonyEnemy and node.is_boss and node._has_ability("phase_storm"):
+			has_storm = true
+			break
+	if not has_storm:
+		return
+	var rad := 70.0 + run.current_floor * 1.2
+	var dmg := 9.0 + run.current_floor * 0.5
+	_spawn_hazard_pattern("ring", 3, rad, dmg)
 
 # Cada eliminación: contabiliza, aplica efectos del inventario, dispara la
 # siguiente oleada si procede, o completa la sala cuando ya no hay enemigos.
@@ -353,24 +399,31 @@ func _apply_meta_bonuses() -> void:
 	player.composure_gain_mult = float(bonuses.get("composure_mult", 1.0))
 	player.items.shop_discount = int(bonuses.get("shop_discount", 0))
 	player.meta_path = str(bonuses.get("path", ""))
+	player.path_empower = 0
+	_refresh_path_bonuses()
+	player._emit_stats()
+
+func _refresh_path_bonuses() -> void:
 	player.ability_damage_mult = 1.0
 	player.dodge_cd_mult = 1.0
 	player.speed_path_mult = 1.0
 	player.harmony_path_mult = 1.0
 	player.kill_composure_mult = 1.0
 	player.adlib_damage_mult = 1.0
+	player.chain_window = 2.6
+	var empower := 1.0 + 0.08 * float(player.path_empower)
 	match player.meta_path:
 		"solar":
-			player.ability_damage_mult = 1.18
+			player.ability_damage_mult = 1.18 * empower
 		"moonbyul":
-			player.dodge_cd_mult = 0.80
-			player.speed_path_mult = 1.10
+			player.dodge_cd_mult = 0.80 / empower
+			player.speed_path_mult = 1.10 * empower
 		"wheein":
-			player.harmony_path_mult = 1.25
+			player.harmony_path_mult = 1.25 * empower
+			player.chain_window = 2.6 + 0.6
 		"hwasa":
-			player.kill_composure_mult = 1.60
-			player.adlib_damage_mult = 1.12
-	player._emit_stats()
+			player.kill_composure_mult = 1.60 * empower
+			player.adlib_damage_mult = 1.12 * empower
 
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del
 # piso (avanzar) ocurre al pulsar continuar en la transición.
@@ -490,6 +543,16 @@ func _apply_event_effect(effect_id: String) -> void:
 			for i in range(4):
 				if i != player.active_index and player.member_voice[i] > 0.0:
 					player.member_voice[i] = maxf(1.0, player.member_voice[i] - 8.0)
+		"path_empower":
+			if player.meta_path.is_empty():
+				player.gain_composure(30.0)
+			else:
+				player.path_empower = mini(2, player.path_empower + 1)
+				_refresh_path_bonuses()
+				VISUALS.float_text(self, player.global_position + Vector2(0, -70), "RUTA↑", Color("ffd166"))
+		"path_cross_rehearsal":
+			_grant_random_item("RARE")
+			player.gain_composure(20.0)
 		_:
 			pass
 	VISUALS.float_text(self, player.global_position + Vector2(0, -50), "EVENTO", Color("4cc9f0"))

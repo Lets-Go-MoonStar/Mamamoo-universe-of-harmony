@@ -100,4 +100,13 @@ static func late_events() -> Array:
 				{"text": "Cancelar la función", "effect": "noop"},
 			],
 		},
+		{
+			"id": "path_encore",
+			"title": "Camerino de rutas\nUn espejo refleja a la estrella que elegiste.",
+			"choices": [
+				{"text": "Afinar la ruta (+potencia de build hasta fin de run)", "effect": "path_empower"},
+				{"text": "Ensayo cruzado (+objeto RARO+ y +20 Compostura)", "effect": "path_cross_rehearsal"},
+				{"text": "Descansar la voz (+20% Voz)", "effect": "heal_15"},
+			],
+		},
 	]
