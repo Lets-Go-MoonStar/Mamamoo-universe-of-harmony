@@ -102,6 +102,7 @@ $GODOT --headless --path . --fixed-fps 60 --script res://tests/logic_audit.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/visual_integration.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/boundary_cases.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/celestial_chest_smoke.gd
+$GODOT --headless --path . --fixed-fps 60 --script res://tests/spectacle_builds_smoke.gd
 ```
 
 `floor_system.gd` cubre el sistema procedural: reproducibilidad por seed,
@@ -142,3 +143,4 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 10. ~~Audio placeholder.~~ (`Sfx` tonos procedurales)
 11. ~~Pulido UX.~~ (Esc pausa, intros de piso/jefe, tooltips de inventario)
 12. ~~Profundidad de jugabilidad.~~ (foes firmados, eventos late, feedback visual, upgrades meta, picos por banda)
+13. ~~Espectáculo + builds + arenas.~~ (telegraphs/hazards, rutas Solar/Moonbyul/Wheein/Hwasa, SFX en acordes, 3 foes nuevos)

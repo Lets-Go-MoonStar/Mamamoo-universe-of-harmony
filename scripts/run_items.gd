@@ -272,6 +272,8 @@ func damage_multiplier(member: int) -> float:
 	bonus += 0.20 if active("encore") else 0.0
 	bonus += CombatConstants.ADLIB_SPARK_DAMAGE if active("adlib") and count("ad_lib_spark_core") > 0 else 0.0
 	bonus += 0.12 if active("field") and player.global_position.distance_to(field_center) <= 130.0 else 0.0
+	if active("adlib"):
+		bonus += maxf(0.0, player.adlib_damage_mult - 1.0)
 	return 1.0 + minf(1.0, bonus)
 
 # Al cambiar de integrante: órbita cósmica rara (daño de área cada 4 cambios),
@@ -410,7 +412,7 @@ func on_kill(enemy) -> void:
 		xp -= 100.0
 		level += 1
 		reward_requested.emit("level")
-	player.gain_composure(CombatConstants.COMPOSURE_ON_KILL)
+	player.gain_composure(CombatConstants.COMPOSURE_ON_KILL * player.kill_composure_mult)
 	if active("adlib") and count("ad_lib_spark_core") > 0 and adlib_extension < CombatConstants.ADLIB_EXTEND_CAP:
 		var extension := minf(CombatConstants.ADLIB_EXTEND_PER_KILL, CombatConstants.ADLIB_EXTEND_CAP - adlib_extension)
 		timers.adlib += extension

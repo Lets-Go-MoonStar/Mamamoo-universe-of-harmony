@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "grav_anchor"
+display_name = "Grav Anchor"
+archetype = "tank"
+max_hp = 190.0
+damage = 14.0
+speed = 48.0
+attack_range = 46.0
+attack_cooldown = 1.2
+difficulty_cost = 4
+abilities = Array[String](["pull", "telegraph", "enrage"])
+sprite_index = 4
+min_floor = 7
+max_floor = 13
+is_elite = true

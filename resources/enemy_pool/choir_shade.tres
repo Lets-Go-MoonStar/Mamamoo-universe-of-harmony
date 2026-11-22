@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "choir_shade"
+display_name = "Choir Shade"
+archetype = "swarm"
+max_hp = 36.0
+damage = 8.0
+speed = 125.0
+attack_range = 34.0
+attack_cooldown = 0.7
+difficulty_cost = 2
+abilities = Array[String](["telegraph", "dash"])
+sprite_index = 5
+min_floor = 6
+max_floor = 13

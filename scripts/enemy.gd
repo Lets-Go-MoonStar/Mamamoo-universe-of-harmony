@@ -61,6 +61,13 @@ var fired_cd := 0.0
 var dash_cd := 0.0
 var dash_time := 0.0
 var dash_dir := Vector2.ZERO
+# Telegraph: aviso visible antes de dash/disparo/pull.
+var telegraph_time := 0.0
+var telegraph_kind := ""
+var snare_cd := 0.0
+var pull_cd := 0.0
+const SFX = preload("res://scripts/systems/sfx.gd")
+const HAZARD = preload("res://scripts/systems/arena_hazard.gd")
 
 # Configura la variante clásica del prototipo (compatibilidad con tests).
 func setup(new_target: Node2D, variant: int = 0) -> void:
@@ -185,6 +192,16 @@ func _physics_process(delta: float) -> void:
 	var direction := global_position.direction_to(target.global_position)
 	var speed_mult := (slow_factor if slow_timer > 0.0 else 1.0) * (1.3 if enraged else 1.0)
 	dash_cd = maxf(0.0, dash_cd - delta)
+	snare_cd = maxf(0.0, snare_cd - delta)
+	pull_cd = maxf(0.0, pull_cd - delta)
+	if telegraph_time > 0.0:
+		telegraph_time = maxf(0.0, telegraph_time - delta)
+		velocity = Vector2.ZERO
+		if telegraph_time <= 0.0:
+			_resolve_telegraph()
+		move_and_slide()
+		art.locomotion(false, direction.x)
+		return
 	if dash_time > 0.0:
 		dash_time = maxf(0.0, dash_time - delta)
 		velocity = dash_dir * move_speed * 3.2 * speed_mult
@@ -193,17 +210,53 @@ func _physics_process(delta: float) -> void:
 		art.locomotion(true, dash_dir.x)
 		return
 	if _has_ability("dash") and dash_cd <= 0.0 and global_position.distance_to(target.global_position) > 90.0:
-		dash_dir = direction
-		dash_time = 0.22
-		dash_cd = 2.8 if data != null and data.is_elite else 3.4
-		VISUALS.burst(self, VISUALS.COMBAT, 1, 4, 70.0, Vector2(0, -10), 0.25)
-	if ranged:
+		_begin_telegraph("dash", 0.55 if _has_ability("telegraph") else 0.15)
+	elif _has_ability("snare") and snare_cd <= 0.0:
+		_begin_telegraph("snare", 0.7)
+	elif _has_ability("pull") and pull_cd <= 0.0 and global_position.distance_to(target.global_position) < 220.0:
+		_begin_telegraph("pull", 0.8)
+	elif ranged:
 		_ranged_behavior(delta, direction, speed_mult)
 	else:
 		velocity = direction * move_speed * speed_mult
 		_melee_contact()
 	move_and_slide()
 	art.locomotion(velocity.length() > 1.0, direction.x)
+
+func _begin_telegraph(kind: String, duration: float) -> void:
+	telegraph_kind = kind
+	telegraph_time = duration
+	SFX.play("telegraph")
+	VISUALS.float_text(get_parent(), global_position + Vector2(0, -50), "!", Color("ffd166"))
+
+func _resolve_telegraph() -> void:
+	var kind := telegraph_kind
+	telegraph_kind = ""
+	if not is_instance_valid(target):
+		return
+	match kind:
+		"dash":
+			dash_dir = global_position.direction_to(target.global_position)
+			dash_time = 0.22
+			dash_cd = 2.8 if data != null and data.is_elite else 3.4
+			VISUALS.burst(self, VISUALS.COMBAT, 1, 4, 70.0, Vector2(0, -10), 0.25)
+		"snare":
+			snare_cd = 4.5
+			var hazard = HAZARD.new()
+			get_parent().add_child(hazard)
+			hazard.setup(target, target.global_position, 62.0, contact_damage * 0.7)
+			SFX.play("hazard")
+		"pull":
+			pull_cd = 5.0
+			if target is CharacterBody2D:
+				target.global_position = target.global_position.lerp(global_position, 0.45)
+			VISUALS.burst(self, VISUALS.STATUS, 3, 6, 90.0, Vector2.ZERO, 0.35)
+			VISUALS.float_text(get_parent(), global_position + Vector2(0, -40), "PULL", Color("c77dff"))
+			_melee_contact()
+		"shot":
+			_fire_projectile()
+		_:
+			pass
 
 # Arquetipo ranged: mantiene distancia de tiro, se desplaza en perpendicular
 # (finta) y dispara un proyectil enemigo cuando el CD está listo.
@@ -217,7 +270,10 @@ func _ranged_behavior(delta: float, direction: Vector2, speed_mult: float) -> vo
 	else:
 		velocity = direction.orthogonal() * move_speed * 0.35 * speed_mult
 	if fired_cd <= 0.0 and distance <= attack_range and distance > 30.0:
-		_fire_projectile()
+		if (is_boss or _has_ability("telegraph")) and telegraph_time <= 0.0 and telegraph_kind == "":
+			_begin_telegraph("shot", 0.45 if is_boss else 0.35)
+		else:
+			_fire_projectile()
 
 # Crea un proyectil enemigo (enemy_projectile.gd) hacia el jugador.
 func _fire_projectile() -> void:
@@ -350,3 +406,9 @@ func _draw() -> void:
 		draw_arc(Vector2.ZERO, 27.0, 0.0, TAU, 28, Color("ffd166", 0.85), 2.5)
 	if _has_ability("dash") and dash_cd <= 0.4:
 		draw_arc(Vector2.ZERO, 20.0, 0.0, TAU, 16, Color("4cc9f0", 0.7), 1.5)
+	if telegraph_time > 0.0:
+		var pulse := 1.0 - clampf(telegraph_time / 0.8, 0.0, 1.0)
+		draw_arc(Vector2.ZERO, 18.0 + pulse * 16.0, 0.0, TAU, 28, Color("ffd166", 0.55 + pulse * 0.4), 3.0)
+		if telegraph_kind in ["dash", "pull"] and is_instance_valid(target):
+			var tip := (target.global_position - global_position).limit_length(70.0)
+			draw_line(Vector2.ZERO, tip, Color("ff5964", 0.65), 2.0)

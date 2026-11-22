@@ -379,6 +379,35 @@ func open_meta_upgrades() -> void:
 	var meta: Dictionary = META.load_data()
 	label("Mejoras permanentes · ✦ %d fragmentos" % int(meta.get("star_fragments", 0)))
 	label("Se compran entre runs y aplican al empezar la siguiente.", content, 13)
+	var path_id: String = str(meta.get("path", ""))
+	var path_label: String = "ninguna (elige una build)"
+	if META.PATH_DEFS.has(path_id):
+		path_label = str(META.PATH_DEFS[path_id].get("label", path_id))
+	label("Ruta activa: %s" % path_label, content, 14)
+	for pid in META.PATH_DEFS:
+		var pdef: Dictionary = META.PATH_DEFS[pid]
+		var selected: bool = str(pid) == path_id
+		var cost: int = 0 if path_id.is_empty() else 20
+		if path_id.is_empty():
+			cost = int(pdef.get("cost", 45))
+		var ptxt: String = "%s — %s" % [str(pdef.get("label", pid)), str(pdef.get("desc", ""))]
+		if selected:
+			label("✓ " + ptxt, content, 13)
+		else:
+			var path_btn := button("Elegir (%d ✦) · %s" % [cost, ptxt], func():
+				if META.select_path(pid):
+					SFX.play("pickup")
+					open_meta_upgrades()
+				else:
+					SFX.play("ui"), content)
+			path_btn.disabled = int(meta.get("star_fragments", 0)) < cost
+	if not path_id.is_empty():
+		var clear_btn := button("Quitar ruta (15 ✦)", func():
+			if META.clear_path():
+				SFX.play("ui")
+				open_meta_upgrades(), content)
+		clear_btn.disabled = int(meta.get("star_fragments", 0)) < 15
+	label("Upgrades generales:", content, 14)
 	for id in META.UPGRADE_DEFS:
 		var def: Dictionary = META.UPGRADE_DEFS[id]
 		var level: int = META.upgrade_level(id)

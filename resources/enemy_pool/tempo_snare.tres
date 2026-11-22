@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tempo_snare"
+display_name = "Tempo Snare"
+archetype = "ranged"
+max_hp = 78.0
+damage = 10.0
+speed = 70.0
+attack_range = 210.0
+attack_cooldown = 1.35
+difficulty_cost = 3
+abilities = Array[String](["snare", "telegraph"])
+sprite_index = 1
+min_floor = 5
+max_floor = 12
