@@ -26,6 +26,7 @@ const RUN_MANAGER = preload("res://scripts/systems/run_manager.gd")
 const SESSION = preload("res://scripts/systems/session_store.gd")
 const EVENT_CATALOG = preload("res://scripts/systems/event_catalog.gd")
 const ITEM_CATALOG = preload("res://scripts/item_catalog.gd")
+const SFX = preload("res://scripts/systems/sfx.gd")
 
 const BACKGROUNDS = [
 	preload("res://assets/backgrounds/eclipse_arena_background.png"),
@@ -60,10 +61,12 @@ var spawned := 0
 var defeated := 0
 var rng := RandomNumberGenerator.new()
 var arena_rect := Rect2(90, 442, 1100, 164)
+var _intro_floor_shown := -1
 
 func _ready() -> void:
 	rng.randomize()
 	_setup_inputs()
+	SFX.ensure(self)
 	stage_index = int(get_tree().get_meta("stage_index", 0))
 	actors = Node2D.new()
 	actors.y_sort_enabled = true
@@ -74,12 +77,14 @@ func _ready() -> void:
 	# restaura desde SessionStore si hay partida entre sesiones.
 	run = RUN_MANAGER.new()
 	add_child(run)
+	run.run_completed.connect(_on_run_completed)
 	var restored := _try_restore_session()
 	if not restored:
 		run.new_run(int(get_tree().get_meta("run_seed", 0)))
 	get_tree().set_meta("run_seed", run.run_seed)
 	room_kills = 0
 	player.items.changed.connect(_autosave_session)
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	if run.current_room() != null:
 		var room: RoomData = run.current_room()
 		# Sala ya completada: reanudamos en el panel de rutas (sin repetir premio).
@@ -112,6 +117,7 @@ func _setup_inputs() -> void:
 	_add_key_action("next_stage", KEY_N)
 	_add_key_action("inventory", KEY_I)
 	_add_key_action("adlib", KEY_Q)
+	_add_key_action("pause_game", KEY_ESCAPE)
 
 func _add_key_action(action: StringName, keycode: Key) -> void:
 	if not InputMap.has_action(action):
@@ -123,17 +129,24 @@ func _add_key_action(action: StringName, keycode: Key) -> void:
 
 func _process(delta: float) -> void:
 	# Atajos globales: escenario (N), reiniciar con la misma seed (R) y
-	# nueva run con seed distinta (M).
+	# nueva run con seed distinta (M). Pausa con Esc.
+	if Input.is_action_just_pressed("pause_game"):
+		if is_instance_valid(combat_hud) and (not is_instance_valid(item_ui) or not item_ui.overlay.visible):
+			combat_hud.toggle_pause()
 	if Input.is_action_just_pressed("next_stage"):
 		select_stage((stage_index + 1) % BACKGROUNDS.size())
 	if Input.is_action_just_pressed("restart"):
 		# R: misma seed desde cero (descarta la sesión guardada).
 		SESSION.clear()
+		get_tree().paused = false
 		get_tree().reload_current_scene()
 	if Input.is_action_just_pressed("new_seed"):
 		SESSION.clear()
+		get_tree().paused = false
 		get_tree().set_meta("run_seed", rng.randi() + 1)
 		get_tree().reload_current_scene()
+	if combat_hud != null and combat_hud.paused_game:
+		return
 	if not is_instance_valid(player) or player.team_defeated:
 		return
 	# Si hay oleadas pendientes, la siguiente aparece tras un breve respiro.
@@ -205,6 +218,9 @@ func _begin_current_room() -> void:
 	select_stage(_biome_for(room))
 	awaiting_reward = false
 	awaiting_floor_start = false
+	if room.room_type == "START" and _intro_floor_shown != run.current_floor:
+		_intro_floor_shown = run.current_floor
+		combat_hud.show_floor_intro(run.current_floor, STAGE_NAMES[_biome_for(room) % STAGE_NAMES.size()])
 	match room.room_type:
 		"BOSS":
 			_spawn_boss()
@@ -256,6 +272,7 @@ func _spawn_boss() -> void:
 	var boss: BossData = run.pick_boss()
 	if boss == null:
 		return
+	combat_hud.show_boss_intro(boss.get_display_name())
 	var enemy := ENEMY.new()
 	enemy.setup_boss(player, boss)
 	enemy.global_position = Vector2(arena_rect.get_center().x, arena_rect.position.y + 90.0)
@@ -295,6 +312,7 @@ func _handle_room_cleared() -> void:
 	item_ui.queue_reward(cleared.reward_kind if cleared != null else "combat")
 	room_number = run.rooms_completed + 1
 	player.invulnerable = 1.5
+	SFX.play("clear")
 	_autosave_session()
 
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del
@@ -454,7 +472,24 @@ func start_next_room() -> void:
 
 func _on_game_over() -> void:
 	SESSION.clear()
-	combat_hud.show_defeat()
+	combat_hud.show_run_end(false, _run_summary())
+
+func _on_run_completed() -> void:
+	SESSION.clear()
+	combat_hud.show_run_end(true, _run_summary())
+
+func _run_summary() -> Dictionary:
+	var item_count := 0
+	if is_instance_valid(player) and player.items != null:
+		for id in player.items.owned:
+			item_count += int(player.items.owned[id])
+	return {
+		"floor": run.current_floor if run != null else 1,
+		"rooms": run.rooms_completed if run != null else 0,
+		"bosses": run.bosses_defeated.size() if run != null else 0,
+		"coins": player.items.coins if is_instance_valid(player) else 0,
+		"items": item_count,
+	}
 
 # --- Persistencia de sesión -----------------------------------------------
 

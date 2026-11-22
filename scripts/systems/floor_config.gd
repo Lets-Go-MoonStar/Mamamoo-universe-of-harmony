@@ -80,6 +80,10 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 		"res://resources/enemy_pool/feedback_elite.tres",
 		"res://resources/enemy_pool/mute_elite.tres",
 	]
+	var extra: Array[String] = [
+		"res://resources/enemy_pool/resonance_drone.tres",
+		"res://resources/enemy_pool/pulse_swarm.tres",
+	]
 	var pool: Array[String] = early.duplicate()
 	if floor_number >= 2:
 		pool.append_array(mid.slice(0, 2))
@@ -87,6 +91,10 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 		pool.append_array(mid.slice(2, 4))
 	if floor_number >= 4:
 		pool.append_array(late)
+	if floor_number >= 5:
+		pool.append(extra[0])
+	if floor_number >= 6:
+		pool.append(extra[1])
 	return pool
 
 static func boss_pool_for(floor_number: int) -> Array[String]:
@@ -97,6 +105,8 @@ static func boss_pool_for(floor_number: int) -> Array[String]:
 		bosses.append("res://resources/boss_pool/critic.tres")
 	if floor_number >= 3:
 		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if floor_number >= 8:
+		bosses.append("res://resources/boss_pool/void_conductor.tres")
 	if bosses.is_empty():
 		bosses.append("res://resources/boss_pool/eclipse.tres")
 	return bosses

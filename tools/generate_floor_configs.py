@@ -22,6 +22,10 @@ LATE = [
 	"res://resources/enemy_pool/feedback_elite.tres",
 	"res://resources/enemy_pool/mute_elite.tres",
 ]
+EXTRA = [
+	"res://resources/enemy_pool/resonance_drone.tres",
+	"res://resources/enemy_pool/pulse_swarm.tres",
+]
 
 
 def enemy_pool(n: int) -> list[str]:
@@ -32,6 +36,10 @@ def enemy_pool(n: int) -> list[str]:
 		pool += MID[2:]
 	if n >= 4:
 		pool += LATE
+	if n >= 5:
+		pool.append(EXTRA[0])
+	if n >= 6:
+		pool.append(EXTRA[1])
 	return pool
 
 
@@ -43,6 +51,8 @@ def boss_pool(n: int) -> list[str]:
 		bosses.append("res://resources/boss_pool/critic.tres")
 	if n >= 3:
 		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if n >= 8:
+		bosses.append("res://resources/boss_pool/void_conductor.tres")
 	return bosses or ["res://resources/boss_pool/eclipse.tres"]
 
 

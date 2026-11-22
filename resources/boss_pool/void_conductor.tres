@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/boss_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "void_conductor"
+display_name = "Void Conductor"
+hp = 2100.0
+damage = 28.0
+speed = 64.0
+phase_count = 3
+abilities = Array[String](["ranged", "enrage"])
+arena_index = 8
+difficulty = 4
+min_floor = 8
+max_floor = 13
+sprite_index = 3
+exclusive_rewards = Array[String](["void_baton", "silence_score"])
