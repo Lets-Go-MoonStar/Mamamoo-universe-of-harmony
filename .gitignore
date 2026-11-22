@@ -1,0 +1,18 @@
+# Godot 4
+.godot/
+*.translation
+export_presets.cfg
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.tmp
+*.log
+
+# Local tooling
+graphify-out/
+__pycache__/
+*.pyc
+
+# Test capture dumps (keep tracked previews that already live in tests/)
+tests/results/
