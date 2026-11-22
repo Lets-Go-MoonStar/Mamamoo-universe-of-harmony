@@ -56,6 +56,14 @@ var composure := 0.0
 var composure_gain_mult := 1.0
 # Flash rojo breve al recibir daño (lectura de peligro).
 var hurt_flash := 0.0
+# Ruta meta activa (solar/moonbyul/wheein/hwasa).
+var meta_path := ""
+var ability_damage_mult := 1.0
+var dodge_cd_mult := 1.0
+var speed_path_mult := 1.0
+var harmony_path_mult := 1.0
+var kill_composure_mult := 1.0
+var adlib_damage_mult := 1.0
 # Cooldowns: ataque, habilidad y esquiva; invulnerable = segundos sin recibir daño.
 var attack_cd := 0.0
 var ability_cd := 0.0
@@ -121,7 +129,7 @@ func _physics_process(delta: float) -> void:
 # multiplicadores de ítems y la ralentización activa.
 func _handle_movement() -> void:
 	var input_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
-	velocity = input_vec * float(members[active_index]["speed"]) * items.speed_multiplier() * (1.0 - slow_strength if slow_time > 0.0 else 1.0)
+	velocity = input_vec * float(members[active_index]["speed"]) * items.speed_multiplier() * speed_path_mult * (1.0 - slow_strength if slow_time > 0.0 else 1.0)
 
 # Actualiza la dirección de disparo en función de las teclas WASD mantenidas:
 # el orden del array guarda la más reciente (gana al soltar de atrás hacia delante).
@@ -175,10 +183,12 @@ func _use_ability(repeat: bool = false) -> void:
 		items.energy -= 100.0
 		ability_cd = items.ability_cooldown()
 		items.on_ability(active_index)
-	cast_scale = (0.5 if repeat else 1.0) * (1.0 + 0.20 * items.skill_ranks[active_index])
+	cast_scale = (0.5 if repeat else 1.0) * (1.0 + 0.20 * items.skill_ranks[active_index]) * ability_damage_mult
 	art.action("ability", 0.45)
 	VISUALS.flash(self, VISUALS.cell(VISUALS.COMBAT, active_index, 3, 4, 6), 100.0, Vector2(0, -24))
 	VISUALS.elemental_burst(self, active_index)
+	if not repeat and meta_path == "solar":
+		gain_composure(12.0)
 	match active_index:
 		0:
 			# Solar: curación limitada + pulso de luz.
@@ -208,11 +218,11 @@ func _dodge() -> void:
 	if team_defeated:
 		return
 	art.action("dodge", 0.23)
-	dodge_cd = 1.05
+	dodge_cd = 1.05 * dodge_cd_mult
 	invulnerable = 0.22
 	var move_vec := Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	var direction := move_vec.normalized() if move_vec.length() > 0.0 else aim_dir
-	global_position += direction * 95.0 * (1.0 + 0.08 * items.count("speed_feather_charm"))
+	global_position += direction * 95.0 * (1.0 + 0.08 * items.count("speed_feather_charm")) * speed_path_mult
 
 # Cambio manual de integrante (teclas 1-4): solo a una viva y distinta.
 # Dispara las sinergias de ítems y el efecto de relevo de la nueva integrante.
@@ -224,6 +234,8 @@ func switch_to(index: int) -> void:
 	var previous := active_index
 	_activate_member(index)
 	items.on_switch(previous, index)
+	if meta_path == "wheein":
+		items.heal_member(index, 4.0)
 	_trigger_tag_skill(index)
 	_emit_stats()
 
@@ -287,7 +299,7 @@ func _on_projectile_hit(member_index: int, _damage: float) -> void:
 	if team_defeated:
 		return
 	_register_chain_hit(member_index)
-	harmony = min(100.0, harmony + (3.0 + chain_level * 1.5) * items.harmony_multiplier())
+	harmony = min(100.0, harmony + (3.0 + chain_level * 1.5) * items.harmony_multiplier() * harmony_path_mult)
 	gain_composure(CombatConstants.COMPOSURE_ON_HIT)
 	_emit_stats()
 

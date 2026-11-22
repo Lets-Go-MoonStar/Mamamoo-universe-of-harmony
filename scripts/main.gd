@@ -28,6 +28,7 @@ const EVENT_CATALOG = preload("res://scripts/systems/event_catalog.gd")
 const ITEM_CATALOG = preload("res://scripts/item_catalog.gd")
 const SFX = preload("res://scripts/systems/sfx.gd")
 const META = preload("res://scripts/systems/meta_progress.gd")
+const ARENA_HAZARD = preload("res://scripts/systems/arena_hazard.gd")
 
 const BACKGROUNDS = [
 	preload("res://assets/backgrounds/eclipse_arena_background.png"),
@@ -233,6 +234,8 @@ func _begin_current_room() -> void:
 				total += wave.size()
 			room_budget = maxi(1, total)
 			_spawn_wave(run.battle_waves[0])
+			if room.room_type != "START":
+				_spawn_room_hazards(room)
 		"EVENT":
 			_enter_event_room()
 		"REST":
@@ -256,6 +259,8 @@ func _clear_actors_except_player() -> void:
 		if child == player:
 			continue
 		child.queue_free()
+	for hazard in get_tree().get_nodes_in_group("hazards"):
+		hazard.queue_free()
 
 # Genera una oleada de enemigos data-driven en los bordes de la arena.
 func _spawn_wave(wave: Array) -> void:
@@ -268,6 +273,25 @@ func _spawn_wave(wave: Array) -> void:
 		enemy.defeated.connect(_on_enemy_defeated)
 		actors.add_child(enemy)
 		spawned += 1
+
+# Puzzle de sala: zonas con telegraph en combate/élite a partir del piso 4.
+func _spawn_room_hazards(room: RoomData) -> void:
+	if room == null or room.room_type not in ["COMBAT", "ELITE", "BOSS"]:
+		return
+	if run.current_floor < 4:
+		return
+	var count := 1 if room.room_type == "COMBAT" else 2
+	if room.room_type == "BOSS":
+		count = 2
+	for i in range(count):
+		var hazard = ARENA_HAZARD.new()
+		actors.add_child(hazard)
+		var at := Vector2(
+			rng.randf_range(arena_rect.position.x + 80.0, arena_rect.end.x - 80.0),
+			rng.randf_range(arena_rect.position.y + 40.0, arena_rect.end.y - 40.0)
+		)
+		hazard.setup(player, at, 60.0 + run.current_floor * 1.5, 7.0 + run.current_floor * 0.4)
+		VISUALS.float_text(self, at, "ZONA", Color("4cc9f0"))
 
 # Genera el jefe del piso (usado en salas BOSS) con sus refuerzos.
 func _spawn_boss() -> void:
@@ -282,6 +306,7 @@ func _spawn_boss() -> void:
 	enemy.defeated.connect(_on_enemy_defeated)
 	actors.add_child(enemy)
 	spawned += 1
+	_spawn_room_hazards(run.current_room())
 
 # Cada eliminación: contabiliza, aplica efectos del inventario, dispara la
 # siguiente oleada si procede, o completa la sala cuando ya no hay enemigos.
@@ -327,6 +352,24 @@ func _apply_meta_bonuses() -> void:
 	player.items.coins += int(bonuses.get("start_coins", 0))
 	player.composure_gain_mult = float(bonuses.get("composure_mult", 1.0))
 	player.items.shop_discount = int(bonuses.get("shop_discount", 0))
+	player.meta_path = str(bonuses.get("path", ""))
+	player.ability_damage_mult = 1.0
+	player.dodge_cd_mult = 1.0
+	player.speed_path_mult = 1.0
+	player.harmony_path_mult = 1.0
+	player.kill_composure_mult = 1.0
+	player.adlib_damage_mult = 1.0
+	match player.meta_path:
+		"solar":
+			player.ability_damage_mult = 1.18
+		"moonbyul":
+			player.dodge_cd_mult = 0.80
+			player.speed_path_mult = 1.10
+		"wheein":
+			player.harmony_path_mult = 1.25
+		"hwasa":
+			player.kill_composure_mult = 1.60
+			player.adlib_damage_mult = 1.12
 	player._emit_stats()
 
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del

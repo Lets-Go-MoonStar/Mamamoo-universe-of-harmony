@@ -1,12 +1,12 @@
 # ---------------------------------------------------------------------------
-# systems/meta_progress.gd — Progreso permanente entre runs:
-# colección, contadores y upgrades de build permanentes (fragmentos).
+# systems/meta_progress.gd — Colección, upgrades lineales y rutas divergentes
+# por integrante (Solar / Moonbyul / Wheein / Hwasa).
 # ---------------------------------------------------------------------------
 class_name MetaProgress
 extends RefCounted
 
 const PATH := "user://mamamoo_meta.json"
-const VERSION := 2
+const VERSION := 3
 static var path_override := ""
 
 const UPGRADE_DEFS := {
@@ -14,6 +14,33 @@ const UPGRADE_DEFS := {
 	"start_coins": {"max": 5, "cost": 14, "label": "Monedas iniciales +2", "desc": "Empiezas cada run con más monedas."},
 	"composure_rate": {"max": 5, "cost": 16, "label": "Compostura +12%", "desc": "Ganas Compostura más rápido."},
 	"shop_discount": {"max": 3, "cost": 22, "label": "Descuento tienda −1", "desc": "Los precios de tienda bajan 1 moneda (mín. 1)."},
+}
+
+const PATH_DEFS := {
+	"solar": {
+		"cost": 45,
+		"label": "Ruta Solar",
+		"desc": "Habilidades +18% daño · +12 Compostura al usar E.",
+		"member": 0,
+	},
+	"moonbyul": {
+		"cost": 45,
+		"label": "Ruta Moonbyul",
+		"desc": "Esquiva −20% CD · velocidad +10%.",
+		"member": 1,
+	},
+	"wheein": {
+		"cost": 45,
+		"label": "Ruta Wheein",
+		"desc": "Armonía +25% · al cambiar cura 4 Voz.",
+		"member": 2,
+	},
+	"hwasa": {
+		"cost": 45,
+		"label": "Ruta Hwasa",
+		"desc": "Compostura por kill +60% · daño de Ad-lib +12%.",
+		"member": 3,
+	},
 }
 
 static func file_path() -> String:
@@ -28,6 +55,7 @@ static func _empty() -> Dictionary:
 		"runs_lost": 0,
 		"star_fragments": 0,
 		"best_floor": 1,
+		"path": "",
 		"upgrades": {
 			"voice_bonus": 0,
 			"start_coins": 0,
@@ -46,7 +74,6 @@ static func load_data() -> Dictionary:
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return _empty()
 	var data: Dictionary = parsed
-	# Migra v1 → v2 rellenando claves nuevas.
 	for key in _empty():
 		if not data.has(key):
 			data[key] = _empty()[key]
@@ -81,6 +108,37 @@ static func is_discovered(item_id: String) -> bool:
 static func discovered_count() -> int:
 	return load_data().get("discovered", []).size()
 
+static func current_path() -> String:
+	return str(load_data().get("path", ""))
+
+static func select_path(path_id: String) -> bool:
+	if not PATH_DEFS.has(path_id):
+		return false
+	var data := load_data()
+	var current := str(data.get("path", ""))
+	var cost := 0 if current.is_empty() else 20
+	if current == path_id:
+		return true
+	if current.is_empty():
+		cost = int(PATH_DEFS[path_id].get("cost", 45))
+	if int(data.get("star_fragments", 0)) < cost:
+		return false
+	data["star_fragments"] = int(data.get("star_fragments", 0)) - cost
+	data["path"] = path_id
+	save_data(data)
+	return true
+
+static func clear_path() -> bool:
+	var data := load_data()
+	if str(data.get("path", "")).is_empty():
+		return true
+	if int(data.get("star_fragments", 0)) < 15:
+		return false
+	data["star_fragments"] = int(data.get("star_fragments", 0)) - 15
+	data["path"] = ""
+	save_data(data)
+	return true
+
 static func upgrade_level(id: String) -> int:
 	return int(load_data().get("upgrades", {}).get(id, 0))
 
@@ -110,14 +168,16 @@ static func buy_upgrade(id: String) -> bool:
 	save_data(data)
 	return true
 
-# Bonos aplicados al empezar una run.
 static func run_bonuses() -> Dictionary:
-	var ups: Dictionary = load_data().get("upgrades", {})
+	var data := load_data()
+	var ups: Dictionary = data.get("upgrades", {})
+	var path_id := str(data.get("path", ""))
 	return {
 		"voice_max_bonus": int(ups.get("voice_bonus", 0)) * 4.0,
 		"start_coins": int(ups.get("start_coins", 0)) * 2,
 		"composure_mult": 1.0 + int(ups.get("composure_rate", 0)) * 0.12,
 		"shop_discount": int(ups.get("shop_discount", 0)),
+		"path": path_id,
 	}
 
 static func record_run(won: bool, floor_reached: int, rooms_cleared: int) -> Dictionary:

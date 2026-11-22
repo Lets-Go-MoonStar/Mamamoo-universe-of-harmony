@@ -28,6 +28,9 @@ EXTRA = [
 	"res://resources/enemy_pool/hex_echo.tres",
 	"res://resources/enemy_pool/mirror_siren.tres",
 	"res://resources/enemy_pool/beat_crusher.tres",
+	"res://resources/enemy_pool/tempo_snare.tres",
+	"res://resources/enemy_pool/choir_shade.tres",
+	"res://resources/enemy_pool/grav_anchor.tres",
 ]
 
 
@@ -42,10 +45,13 @@ def enemy_pool(n: int) -> list[str]:
 		pool.append(EXTRA[2])
 	if n >= 5:
 		pool.append(EXTRA[0])
+		pool.append(EXTRA[5])
 	if n >= 6:
 		pool.append(EXTRA[1])
+		pool.append(EXTRA[6])
 	if n >= 7:
 		pool.append(EXTRA[3])
+		pool.append(EXTRA[7])
 	if n >= 8:
 		pool.append(EXTRA[4])
 	return pool

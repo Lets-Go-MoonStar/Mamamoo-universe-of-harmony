@@ -1,54 +1,70 @@
 # ---------------------------------------------------------------------------
-# systems/sfx.gd — SFX procedurales mínimos (sin assets de audio externos).
-# shortcut: tonos simples; sustituir por WAV/OGG reales cuando haya pack de audio.
+# systems/sfx.gd — SFX procedurales con acordes para momentos memorables.
+# shortcut: sin pack de audio real; sustituir por WAV/OGG cuando exista.
 # ---------------------------------------------------------------------------
 class_name Sfx
 extends RefCounted
 
 static var _player: AudioStreamPlayer
+static var _queue: Array = []
+static var _host: Node
 
 static func ensure(host: Node) -> void:
+	_host = host
 	if is_instance_valid(_player):
 		return
 	_player = AudioStreamPlayer.new()
 	_player.name = "SfxPlayer"
 	_player.bus = "Master"
 	host.add_child(_player)
+	_player.finished.connect(_on_finished)
 
 static func play(kind: String) -> void:
 	if not is_instance_valid(_player):
 		return
-	var hz := 440.0
-	var ms := 80
 	match kind:
 		"ui":
-			hz = 660.0
-			ms = 50
+			_play_tones([[660.0, 45]])
 		"pickup":
-			hz = 880.0
-			ms = 70
+			_play_tones([[740.0, 40], [880.0, 55], [1175.0, 70]])
 		"clear":
-			hz = 523.0
-			ms = 120
+			_play_tones([[523.0, 70], [659.0, 80], [784.0, 110]])
 		"adlib":
-			hz = 988.0
-			ms = 160
+			_play_tones([[988.0, 70], [1175.0, 80], [1319.0, 120]])
 		"defeat":
-			hz = 196.0
-			ms = 280
+			_play_tones([[220.0, 120], [196.0, 140], [147.0, 180]])
 		"victory":
-			hz = 784.0
-			ms = 220
+			_play_tones([[523.0, 80], [659.0, 90], [784.0, 90], [1047.0, 140]])
 		"pause":
-			hz = 330.0
-			ms = 60
+			_play_tones([[330.0, 55]])
 		"intro":
-			hz = 440.0
-			ms = 100
+			_play_tones([[440.0, 60], [554.0, 80]])
+		"warn":
+			_play_tones([[370.0, 50], [311.0, 70]])
+		"telegraph":
+			_play_tones([[415.0, 90]])
+		"hazard":
+			_play_tones([[277.0, 60], [349.0, 80]])
 		_:
-			pass
-	_player.stream = _tone(hz, ms)
+			_play_tones([[440.0, 70]])
+
+static func _play_tones(tones: Array) -> void:
+	_queue.clear()
+	for tone in tones:
+		_queue.append(tone)
+	_play_next()
+
+static func _play_next() -> void:
+	if not is_instance_valid(_player) or _queue.is_empty():
+		return
+	if _player.playing:
+		return
+	var tone: Array = _queue.pop_front()
+	_player.stream = _tone(float(tone[0]), int(tone[1]))
 	_player.play()
+
+static func _on_finished() -> void:
+	_play_next()
 
 static func _tone(hz: float, ms: int) -> AudioStreamWAV:
 	var sample_rate := 22050
@@ -58,7 +74,9 @@ static func _tone(hz: float, ms: int) -> AudioStreamWAV:
 	for i in range(count):
 		var t := float(i) / float(sample_rate)
 		var env := 1.0 - float(i) / float(maxi(count, 1))
-		var sample := int(sin(TAU * hz * t) * 0.35 * env * 32767.0)
+		# Ligero segundo armónico para que no suene a pitido plano.
+		var wave := sin(TAU * hz * t) * 0.30 + sin(TAU * hz * 2.0 * t) * 0.08
+		var sample := int(wave * env * 32767.0)
 		data.encode_s16(i * 2, sample)
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
