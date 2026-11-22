@@ -41,9 +41,62 @@ var revival_used := false
 var guardian_saved: Array[bool] = [false, false, false, false]
 var field_center := Vector2.ZERO
 var rng := RandomNumberGenerator.new()
+# Evita re-guardar mientras se restaura una sesión.
+var _restoring := false
 
 func _ready() -> void:
 	rng.randomize()
+
+# Serializa inventario y recursos de la partida para SessionStore.
+func export_session() -> Dictionary:
+	return {
+		"owned": owned.duplicate(),
+		"coins": coins,
+		"keys": keys,
+		"tickets": tickets,
+		"xp": xp,
+		"level": level,
+		"energy": energy,
+		"skill_ranks": skill_ranks.duplicate(),
+		"duo": duo.duplicate(),
+		"revival_used": revival_used,
+		"guardian_saved": guardian_saved.duplicate(),
+	}
+
+# Restaura inventario/recursos desde un diccionario de sesión (JSON-safe).
+func import_session(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	_restoring = true
+	owned = {}
+	var raw_owned: Variant = data.get("owned", {})
+	if typeof(raw_owned) == TYPE_DICTIONARY:
+		for id in raw_owned:
+			owned[str(id)] = int(raw_owned[id])
+	coins = int(data.get("coins", 0))
+	keys = int(data.get("keys", 0))
+	tickets = int(data.get("tickets", 0))
+	xp = float(data.get("xp", 0.0))
+	level = int(data.get("level", 1))
+	energy = float(data.get("energy", 100.0))
+	revival_used = bool(data.get("revival_used", false))
+	var ranks: Array = data.get("skill_ranks", [0, 0, 0, 0])
+	for i in range(4):
+		skill_ranks[i] = int(ranks[i]) if i < ranks.size() else 0
+	var duo_raw: Array = data.get("duo", [0, 1])
+	duo.assign([
+		int(duo_raw[0]) if duo_raw.size() > 0 else 0,
+		int(duo_raw[1]) if duo_raw.size() > 1 else 1,
+	])
+	var saved: Array = data.get("guardian_saved", [false, false, false, false])
+	for i in range(4):
+		guardian_saved[i] = bool(saved[i]) if i < saved.size() else false
+	if count("voice_amplifier_crystal") > 0:
+		player.voice_max = 115.0
+	player.chain_window = 2.6 + 0.5 * count("harmony_crystal_shard")
+	_restoring = false
+	changed.emit()
+	player._emit_stats()
 
 # Cantidad poseída de un ítem por su id.
 func count(id: String) -> int:
@@ -89,7 +142,8 @@ func acquire(id: String, selected: int = -1, second: int = -1) -> bool:
 			owned.erase(id)
 			reward_requested.emit("legendary")
 	player.chain_window = 2.6 + 0.5 * count("harmony_crystal_shard")
-	changed.emit()
+	if not _restoring:
+		changed.emit()
 	player._emit_stats()
 	return true
 

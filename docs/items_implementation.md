@@ -56,7 +56,10 @@ El cofre cura 20% a las vivas y `roll_choices()` con kind `legendary` ofrece has
 
 `tests/items_smoke.gd` comprueba catálogo/iconos, adquisición de los 32 ítems, valores, límites, efectos condicionales, sinergias, Echo y resurrección. `tests/rewards_flow.gd` recorre limpieza de sala, elección, llaves, tickets, cofres y continuación. Las pruebas anteriores de combate, controles, supervivencia e interfaz se mantienen.
 
-Los objetos y recursos son de la partida actual. Reiniciar crea un equipo e inventario nuevos.
+Los objetos y recursos son de la partida actual. La partida en curso se guarda en
+`user://mamamoo_session.json` (`SessionStore`): al reabrir el juego se restauran
+inventario, recursos, Voz, Compostura y progreso de piso/sala. **R** (misma seed)
+y **M** (nueva seed) borran la sesión; la derrota también.
 
 ## Rarezas de las recompensas (sistema procedural)
 

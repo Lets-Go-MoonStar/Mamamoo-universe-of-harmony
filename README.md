@@ -64,8 +64,9 @@ included; all visuals are provided assets of the project.
 - **1 / 2 / 3 / 4**: switch member
 - **I**: inventory and catalog
 - **N**: next background
-- **R**: restart with the same seed
-- **M**: new run (new seed)
+- **R**: restart with the same seed (clears saved session)
+- **M**: new run / new seed (clears saved session)
+- Closing the game keeps the active run (`user://mamamoo_session.json`)
 
 ## Run
 
@@ -132,4 +133,4 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 1. ~~Two more legendary relics so the celestial chest always offers three.~~
 2. ~~Maps/mapa visual del piso y reselección de ruta antes de entrar.~~ (hecho: `scripts/floor_map.gd` en el panel de rutas)
 3. ~~Numbers definitivos de Composure / Ad-lib / reacciones elementales.~~ (`scripts/systems/combat_constants.gd`)
-4. Persistencia de sesión (inventario entre partidas).
+4. ~~Persistencia de sesión (inventario entre partidas).~~ (`scripts/systems/session_store.gd`, `user://mamamoo_session.json`)
