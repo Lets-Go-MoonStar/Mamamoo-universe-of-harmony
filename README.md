@@ -64,8 +64,9 @@ included; all visuals are provided assets of the project.
 - **1 / 2 / 3 / 4**: switch member
 - **I**: inventory and catalog
 - **N**: next background
-- **R**: restart with the same seed
-- **M**: new run (new seed)
+- **R**: restart with the same seed (clears saved session)
+- **M**: new run / new seed (clears saved session)
+- Closing the game keeps the active run (`user://mamamoo_session.json`)
 
 ## Run
 
