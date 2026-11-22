@@ -270,6 +270,26 @@
     "cell": 10
   },
   {
+    "id": "curtain_call_brooch",
+    "display_name": "Curtain Call Brooch",
+    "rarity": "LEGENDARY",
+    "category": "HARMONY",
+    "max_stacks": 1,
+    "description": "Al activar Ad-lib recuperas 25 de energía. Durante Ad-lib, cada cambio de integrante otorga +6 de Armonía.",
+    "sheet": 1,
+    "cell": 10
+  },
+  {
+    "id": "stage_guardian_veil",
+    "display_name": "Stage Guardian Veil",
+    "rarity": "LEGENDARY",
+    "category": "DEFENSE",
+    "max_stacks": 1,
+    "description": "La primera vez que cada integrante caería a 0 Voz, sobrevive con 15% de Voz e invulnerabilidad 1.5 s (una vez por integrante por partida).",
+    "sheet": 1,
+    "cell": 14
+  },
+  {
     "id": "boss_seal_fragment",
     "display_name": "Boss Seal Fragment",
     "rarity": "UNCOMMON",
@@ -315,7 +335,7 @@
     "rarity": "LEGENDARY",
     "category": "RUN_SPECIAL",
     "max_stacks": 99,
-    "description": "Cura 20% de Voz a las vivas y abre una elección de reliquias. Pool actual: corona legendaria y reliquias épicas (solo hay una reliquia legendaria definida).",
+    "description": "Cura 20% de Voz a las vivas y ofrece 3 reliquias legendarias (Quartet Crown, Curtain Call Brooch, Stage Guardian Veil); eliges 1.",
     "sheet": 1,
     "cell": 15
   }

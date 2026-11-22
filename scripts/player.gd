@@ -323,6 +323,11 @@ func receive_damage(amount: float, corruption: bool = false, boss: bool = false)
 	chain_level = 0
 	chain_changed.emit(0, 0.0)
 	if voice <= 0.0:
+		# Reliquia legendaria: salva a esta integrante una vez antes de rotar.
+		if items.try_guardian_save(active_index):
+			art.action("recover", 0.45)
+			_emit_stats()
+			return
 		# Cycle forward, skipping fallen members. The replacement keeps its own HP.
 		for offset in range(1, members.size()):
 			var next_index := (active_index + offset) % members.size()

@@ -32,7 +32,11 @@ static func icon(id: String) -> AtlasTexture:
 	var item := entry(id)
 	if item.is_empty():
 		return AtlasTexture.new()
-	var new_cells := {"star_coin": 0, "golden_key": 1, "heart_recovery_potion": 2, "echo_orb": 3, "music_note_gem": 4, "flame_emblem": 5, "exp_star_orb": 6, "treasure_chest": 7}
+	var new_cells := {
+		"star_coin": 0, "golden_key": 1, "heart_recovery_potion": 2, "echo_orb": 3,
+		"music_note_gem": 4, "flame_emblem": 5, "exp_star_orb": 6, "treasure_chest": 7,
+		"curtain_call_brooch": 11, "stage_guardian_veil": 12,
+	}
 	if new_cells.has(id):
 		var index: int = new_cells[id]
 		return VISUALS.icon_cell(index)

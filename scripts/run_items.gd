@@ -37,6 +37,8 @@ var switch_count := 0
 var elapsed := 0.0
 var adlib_extension := 0.0
 var revival_used := false
+# Stage Guardian Veil: una salvación por integrante (índice -> ya usada).
+var guardian_saved: Array[bool] = [false, false, false, false]
 var field_center := Vector2.ZERO
 var rng := RandomNumberGenerator.new()
 
@@ -131,6 +133,20 @@ func after_damage() -> void:
 		add_shield(player.active_index, 0.12)
 		timers.shield_cd = 12.0
 
+# Stage Guardian Veil: salva a una integrante la primera vez que caería.
+# Devuelve true si absorbió la caída (deja 15% Voz + invulnerabilidad).
+func try_guardian_save(index: int) -> bool:
+	if count("stage_guardian_veil") == 0 or index < 0 or index > 3:
+		return false
+	if guardian_saved[index]:
+		return false
+	guardian_saved[index] = true
+	player.member_voice[index] = player.voice_max * 0.15
+	player.invulnerable = 1.5
+	VISUALS.burst(player, VISUALS.STATUS, 1, 6, 95.0, Vector2(0, -24))
+	changed.emit()
+	return true
+
 # Pluma de resurrección: revive a las cuatro con 30% de Voz y 1 s de
 # protección; se consume y utiliza una sola vez por partida.
 func revive() -> bool:
@@ -204,6 +220,8 @@ func damage_multiplier(member: int) -> float:
 func on_switch(previous: int, current: int) -> void:
 	if not switch_history.has(previous): switch_history[previous] = elapsed
 	switch_count += 1
+	if count("curtain_call_brooch") > 0 and active("adlib"):
+		player.harmony = minf(100.0, player.harmony + 6.0)
 	if count("rare_cosmic_orb") > 0 and switch_count % 4 == 0:
 		area_damage(player.global_position, 160.0, 20.0)
 		player.harmony = minf(100.0, player.harmony + 8.0)
@@ -251,6 +269,10 @@ func start_adlib() -> void:
 	player.harmony = 0.0
 	timers.adlib = 5.0
 	adlib_extension = 0.0
+	if count("curtain_call_brooch") > 0:
+		energy = minf(100.0, energy + 25.0)
+		changed.emit()
+		player._emit_stats()
 
 # Reacciones de ítems al lanzar una habilidad: el campo de Solar (reliquia)
 # y la superarmadura del talismán de Hwasa.
