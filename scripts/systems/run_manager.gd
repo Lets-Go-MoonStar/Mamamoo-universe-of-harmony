@@ -35,6 +35,47 @@ func new_run(seed_value := 0) -> void:
 	current_floor = 1
 	goto_floor(1)
 
+# Serializa progreso de la run (seed, piso, salas) para SessionStore.
+func export_session() -> Dictionary:
+	var rooms: Array = []
+	for room_data in floor_map:
+		rooms.append({
+			"id": room_data.room_id,
+			"completed": room_data.completed,
+			"visited": room_data.visited,
+		})
+	return {
+		"run_seed": run_seed,
+		"current_floor": current_floor,
+		"current_room_id": current_room_id,
+		"rooms_completed": rooms_completed,
+		"bosses_defeated": bosses_defeated.duplicate(),
+		"rooms": rooms,
+	}
+
+# Reconstruye la run desde seed y reaplica flags de salas del piso actual.
+func import_session(data: Dictionary) -> void:
+	if data.is_empty():
+		return
+	var seed_value := int(data.get("run_seed", 0))
+	new_run(seed_value if seed_value != 0 else randi())
+	var target_floor := maxi(1, int(data.get("current_floor", 1)))
+	for floor_number in range(2, target_floor + 1):
+		goto_floor(floor_number)
+	rooms_completed = int(data.get("rooms_completed", 0))
+	bosses_defeated.clear()
+	for boss_id in data.get("bosses_defeated", []):
+		bosses_defeated.append(str(boss_id))
+	current_room_id = int(data.get("current_room_id", 0))
+	for entry in data.get("rooms", []):
+		if typeof(entry) != TYPE_DICTIONARY:
+			continue
+		var room_data := room(int(entry.get("id", -1)))
+		if room_data == null:
+			continue
+		room_data.completed = bool(entry.get("completed", false))
+		room_data.visited = bool(entry.get("visited", false))
+
 func goto_floor(floor_number: int) -> void:
 	current_floor = floor_number
 	_floor_config = load_floor_config(floor_number)

@@ -23,6 +23,7 @@ var awaiting_floor_start := false
 
 const COMBAT_HUD = preload("res://scripts/combat_hud.gd")
 const RUN_MANAGER = preload("res://scripts/systems/run_manager.gd")
+const SESSION = preload("res://scripts/systems/session_store.gd")
 
 const BACKGROUNDS = [
 	preload("res://assets/backgrounds/eclipse_arena_background.png"),
@@ -67,14 +68,25 @@ func _ready() -> void:
 	add_child(actors)
 	_create_player()
 	_create_hud()
-	# La run se construye con la seed guardada (R la reproduce).
+	# La run se construye con la seed guardada (R la reproduce) o se
+	# restaura desde SessionStore si hay partida entre sesiones.
 	run = RUN_MANAGER.new()
 	add_child(run)
-	run.new_run(int(get_tree().get_meta("run_seed", 0)))
+	var restored := _try_restore_session()
+	if not restored:
+		run.new_run(int(get_tree().get_meta("run_seed", 0)))
 	get_tree().set_meta("run_seed", run.run_seed)
-	if run.current_room() != null:
-		_begin_current_room()
 	room_kills = 0
+	player.items.changed.connect(_autosave_session)
+	if run.current_room() != null:
+		var room: RoomData = run.current_room()
+		# Sala ya completada: reanudamos en el panel de rutas (sin repetir premio).
+		if restored and room.completed:
+			awaiting_reward = true
+			item_ui.show_routes()
+		else:
+			_begin_current_room()
+	_autosave_session()
 	queue_redraw()
 
 # Registra todas las acciones de teclado en el InputMap (teclas físicas).
@@ -113,8 +125,11 @@ func _process(delta: float) -> void:
 	if Input.is_action_just_pressed("next_stage"):
 		select_stage((stage_index + 1) % BACKGROUNDS.size())
 	if Input.is_action_just_pressed("restart"):
+		# R: misma seed desde cero (descarta la sesión guardada).
+		SESSION.clear()
 		get_tree().reload_current_scene()
 	if Input.is_action_just_pressed("new_seed"):
+		SESSION.clear()
 		get_tree().set_meta("run_seed", rng.randi() + 1)
 		get_tree().reload_current_scene()
 	if not is_instance_valid(player) or player.team_defeated:
@@ -278,6 +293,7 @@ func _handle_room_cleared() -> void:
 	item_ui.queue_reward(cleared.reward_kind if cleared != null else "combat")
 	room_number = run.rooms_completed + 1
 	player.invulnerable = 1.5
+	_autosave_session()
 
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del
 # piso (avanzar) ocurre al pulsar continuar en la transición.
@@ -296,6 +312,7 @@ func start_after_boss() -> void:
 	var next := run.current_room()
 	if next != null and not next.completed:
 		_begin_current_room()
+	_autosave_session()
 
 # --- Salas fuera de combate -------------------------------------------------
 
@@ -345,6 +362,7 @@ func finish_non_combat_room() -> void:
 	awaiting_reward = true
 	room_number = run.rooms_completed + 1
 	item_ui.close()
+	_autosave_session()
 
 # --- Navegación del grafo ------------------------------------------------
 
@@ -358,6 +376,7 @@ func go_to_room(room_id: int) -> void:
 	if run.enter_room(room_id) == null:
 		return
 	_begin_current_room()
+	_autosave_session()
 
 # Compatibilidad: continúa a la primera opción de la ruta (siguiente sala
 # del tronco). Usado también por la brújula/contraseña de los tests.
@@ -368,7 +387,48 @@ func start_next_room() -> void:
 	go_to_room(options[0].room_id)
 
 func _on_game_over() -> void:
+	SESSION.clear()
 	combat_hud.show_defeat()
+
+# --- Persistencia de sesión -----------------------------------------------
+
+func _try_restore_session() -> bool:
+	var data: Dictionary = SESSION.read()
+	if data.is_empty():
+		return false
+	run.import_session(data.get("run", {}))
+	player.items.import_session(data.get("items", {}))
+	var voices: Array = data.get("member_voice", [])
+	for i in range(4):
+		player.member_voice[i] = float(voices[i]) if i < voices.size() else player.voice_max
+	player.active_index = clampi(int(data.get("active_index", 0)), 0, 3)
+	player.harmony = float(data.get("harmony", 0.0))
+	player.composure = float(data.get("composure", 0.0))
+	awaiting_reward = bool(data.get("awaiting_reward", false))
+	awaiting_floor_start = bool(data.get("awaiting_floor_start", false))
+	if player.art != null:
+		player.art.configure(player.active_index)
+	player._emit_stats()
+	return true
+
+func _autosave_session() -> void:
+	if not is_instance_valid(player) or player.team_defeated or run == null:
+		return
+	SESSION.write({
+		"run": run.export_session(),
+		"items": player.items.export_session(),
+		"member_voice": player.member_voice.duplicate(),
+		"active_index": player.active_index,
+		"harmony": player.harmony,
+		"composure": player.composure,
+		"stage_index": stage_index,
+		"awaiting_reward": awaiting_reward,
+		"awaiting_floor_start": awaiting_floor_start,
+	})
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_WM_CLOSE_REQUEST:
+		_autosave_session()
 
 # --- HUD y señales ----------------------------------------------------------
 
