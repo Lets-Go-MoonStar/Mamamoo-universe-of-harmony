@@ -74,6 +74,13 @@ included; all visuals are provided assets of the project.
    first time so the global class cache is rebuilt).
 3. Open the project and press **F5** (or run headless).
 
+## Assets
+
+`assets/` must exist for the game to load. The GitHub upload never included the
+illustrated pack; this clone ships **placeholder PNGs** (see `assets/README.md`)
+so preload/import works. Replace them with the real art using the same paths,
+or regenerate missing files with `python tools/generate_placeholder_assets.py`.
+
 ## Tests
 
 Headless suites live in `tests/`. From the project folder:
@@ -89,6 +96,9 @@ $GODOT --headless --path . --fixed-fps 60 --script res://tests/directional_contr
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/rewards_flow.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/art_smoke.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/hud_smoke.gd
+$GODOT --headless --path . --fixed-fps 60 --script res://tests/logic_audit.gd
+$GODOT --headless --path . --fixed-fps 60 --script res://tests/visual_integration.gd
+$GODOT --headless --path . --fixed-fps 60 --script res://tests/boundary_cases.gd
 ```
 
 `floor_system.gd` cubre el sistema procedural: reproducibilidad por seed,
