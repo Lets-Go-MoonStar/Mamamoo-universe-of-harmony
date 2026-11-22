@@ -40,19 +40,30 @@ func _check_route_panel_closes() -> void:
 	scene.item_ui.show_routes()
 	await frames(2)
 	check(scene.item_ui.overlay.visible, "Panel de rutas visible tras completar START")
-	check(get_tree().paused, "Árbol pausado con el panel de rutas")
+	check(paused, "Árbol pausado con el panel de rutas")
 	var options: Array = scene.run.next_options()
 	check(not options.is_empty(), "Hay al menos una ruta disponible")
 	if options.is_empty():
 		scene.queue_free()
 		await frames(1)
 		return
-	# Misma secuencia que el botón "Ir a:" (close + go_to_room).
-	scene.item_ui.close()
-	scene.go_to_room(options[0].room_id)
+	# Forzar COMBAT: salas de servicio reabren panel propio al entrar.
+	options[0].room_type = "COMBAT"
+	options[0].enemy_budget = 5
+	var route_button: Button = null
+	for child in scene.item_ui.content.get_children():
+		if child is Button and String(child.text).begins_with("Ir a:"):
+			route_button = child
+			break
+	if route_button != null:
+		route_button.pressed.emit()
+	else:
+		scene.awaiting_reward = false
+		scene.item_ui.close()
+		scene.go_to_room(options[0].room_id)
 	await frames(2)
 	check(not scene.item_ui.overlay.visible, "Ir a sala cierra el overlay de rutas")
-	check(not get_tree().paused, "Ir a sala reanuda el árbol")
+	check(not paused, "Ir a sala reanuda el árbol")
 	scene.queue_free()
 	await frames(1)
 
@@ -95,7 +106,7 @@ func _check_boss_room_solo_and_clear() -> void:
 	var scene = load("res://scenes/Main.tscn").instantiate()
 	root.add_child(scene)
 	current_scene = scene
-	# Fuerza sala BOSS del piso actual.
+	# Fuerza sala BOSS del piso actual (sin pasar por enter_room / conexiones).
 	var boss_room: RoomData = null
 	for room in scene.run.floor_map:
 		if room.room_type == "BOSS":
@@ -106,7 +117,8 @@ func _check_boss_room_solo_and_clear() -> void:
 		scene.queue_free()
 		await frames(1)
 		return
-	scene.go_to_room(boss_room.room_id)
+	scene.run.current_room_id = boss_room.room_id
+	scene._begin_current_room()
 	await frames(4)
 	var enemies := get_nodes_in_group("enemies")
 	var boss_count := 0
@@ -114,6 +126,10 @@ func _check_boss_room_solo_and_clear() -> void:
 		if enemy.is_boss:
 			boss_count += 1
 	check(enemies.size() == 1 and boss_count == 1, "Sala BOSS contiene únicamente al jefe")
+	if enemies.is_empty():
+		scene.queue_free()
+		await frames(1)
+		return
 	var boss: HarmonyEnemy = enemies[0]
 	boss.take_damage(100000.0, 0)
 	await frames(4)
@@ -136,7 +152,8 @@ func _check_floor_13_ends_clean() -> void:
 		scene.queue_free()
 		await frames(1)
 		return
-	scene.go_to_room(boss_room.room_id)
+	scene.run.current_room_id = boss_room.room_id
+	scene._begin_current_room()
 	await frames(3)
 	var enemies := get_nodes_in_group("enemies")
 	check(not enemies.is_empty() and enemies[0].is_boss, "Piso 13 spawnea al jefe")

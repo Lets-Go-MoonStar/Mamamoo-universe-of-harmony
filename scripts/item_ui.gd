@@ -13,6 +13,7 @@ const VISUALS = preload("res://scripts/visual_assets.gd")
 
 const CATALOG = preload("res://scripts/item_catalog.gd")
 const REWARD_MANAGER = preload("res://scripts/systems/reward_manager.gd")
+const FLOOR_MAP = preload("res://scripts/floor_map.gd")
 var game
 # Referencia al sistema de ítems de la partida (run_items del jugador).
 var system
@@ -97,8 +98,8 @@ func setup(scene) -> void:
 	status.add_theme_font_size_override("font_size", 14)
 	add_child(status)
 	overlay = Panel.new()
-	overlay.position = Vector2(145, 150)
-	overlay.size = Vector2(990, 465)
+	overlay.position = Vector2(145, 90)
+	overlay.size = Vector2(990, 540)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color("111327")
 	style.border_color = Color("b49adc")
@@ -108,7 +109,7 @@ func setup(scene) -> void:
 	add_child(overlay)
 	var margin := MarginContainer.new()
 	margin.position = Vector2(20, 14)
-	margin.size = Vector2(950, 435)
+	margin.size = Vector2(950, 510)
 	overlay.add_child(margin)
 	content = VBoxContainer.new()
 	content.add_theme_constant_override("separation", 9)
@@ -387,6 +388,7 @@ func show_routes() -> void:
 		show_panel()
 		return
 	label("Sala completada · Elige el siguiente encuentro")
+	_add_floor_map()
 	var options: Array = game.run.next_options()
 	for option in options:
 		var room_id: int = option.room_id
@@ -397,7 +399,7 @@ func show_routes() -> void:
 			game.go_to_room(room_id))
 		route_button.icon = VISUALS.room_icon(option.room_type)
 		route_button.expand_icon = true
-		route_button.icon_max_width = 40
+		route_button.custom_minimum_size = Vector2(0, 40)
 	if options.is_empty():
 		button("Continuar", func(): game.start_next_room())
 	var heal := button("Curar 25% al equipo vivo · 3 monedas", func():
@@ -424,6 +426,19 @@ func show_routes() -> void:
 func show_routes_refresh() -> void:
 	overlay.hide()
 	show_routes()
+
+# Mapa visual del piso: clic en un nodo resaltado = elegir esa ruta.
+func _add_floor_map() -> void:
+	var options: Array = game.run.next_options()
+	var map := FLOOR_MAP.new()
+	map.setup(game.run, options)
+	map.room_chosen.connect(func(room_id: int):
+		game.awaiting_reward = false
+		game.awaiting_floor_start = false
+		close()
+		game.go_to_room(room_id))
+	content.add_child(map)
+	label("Clic en un nodo azul para entrar · Amarillo = sala actual", content, 12)
 
 # --- Salas fuera de combate -------------------------------------------------
 

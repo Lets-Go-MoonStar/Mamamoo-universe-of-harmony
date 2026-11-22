@@ -51,17 +51,31 @@ func run() -> void:
 	ui.show_routes()
 	await frames(2)
 	check(ui.overlay.visible, "Panel de rutas / servicios visible")
-	check(get_tree().paused, "Combate pausado durante servicios")
+	check(paused, "Combate pausado durante servicios")
 
 	# Cerrar y continuar a una sala de combate.
 	var options: Array = scene.run.next_options()
 	check(not options.is_empty(), "Hay rutas tras START/recompensa")
 	if not options.is_empty():
-		ui.close()
-		scene.go_to_room(options[0].room_id)
+		# Forzar COMBAT: SHOP/EVENT/REST reabren su propio panel al entrar.
+		options[0].room_type = "COMBAT"
+		options[0].enemy_budget = 5
+		ui.show_routes_refresh()
+		await frames(1)
+		var route_button: Button = null
+		for child in ui.content.get_children():
+			if child is Button and String(child.text).begins_with("Ir a:"):
+				route_button = child
+				break
+		if route_button != null:
+			route_button.pressed.emit()
+		else:
+			scene.awaiting_reward = false
+			ui.close()
+			scene.go_to_room(options[0].room_id)
 		await frames(3)
 		check(not ui.overlay.visible, "Overlay cerrado al entrar a la siguiente sala")
-		check(not get_tree().paused, "Árbol reanudado al entrar a la siguiente sala")
+		check(not paused, "Árbol reanudado al entrar a la siguiente sala")
 
 	# Pesos de rareza por tipo (integración RewardManager ↔ UI).
 	var boss_w := RewardManager.weights_for("boss")

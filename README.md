@@ -129,6 +129,6 @@ por rango de piso de cada variante.
 ## Next milestones
 
 1. Two more legendary relics so the celestial chest always offers three.
-2. Maps/mapa visual del piso y reselección de ruta antes de entrar.
+2. ~~Maps/mapa visual del piso y reselección de ruta antes de entrar.~~ (hecho: `scripts/floor_map.gd` en el panel de rutas)
 3. Numbers definitivos de Composure / Ad-lib / reacciones elementales.
 4. Persistencia de sesión (inventario entre partidas).

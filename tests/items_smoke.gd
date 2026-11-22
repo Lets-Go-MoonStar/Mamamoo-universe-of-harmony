@@ -69,7 +69,7 @@ func run() -> void:
 
 	items.add_shield(0, 0.2, 6.0)
 	check(items.shields[0] > 0.0, "Escudo individual aplicado")
-	var absorbed := items.absorb(10.0)
+	var absorbed: float = items.absorb(10.0)
 	check(absorbed < 10.0, "Escudo absorbe parte del daño")
 
 	# Límites de stacking / cooldown / velocidad / armonía.
@@ -86,7 +86,7 @@ func run() -> void:
 	root.add_child(boss)
 	await frames(1)
 	items.owned["boss_seal_fragment"] = 3
-	var dealt := items.hit(boss, 100.0, 0)
+	var dealt: float = items.hit(boss, 100.0, 0)
 	check(dealt >= 100.0 * 1.09 - 0.01, "Boss seal fragment aplica bono ofensivo a jefes con art_index != 3")
 	boss.queue_free()
 	await frames(1)
@@ -95,7 +95,7 @@ func run() -> void:
 	var dummy_boss := HarmonyEnemy.new()
 	dummy_boss.is_boss = true
 	dummy_boss.art_index = 0
-	var xp_before := items.xp
+	var xp_before: float = items.xp
 	items.on_kill(dummy_boss)
 	check(items.xp >= xp_before + 30.0 - 0.01, "Matar jefe (is_boss=true, art_index=0) otorga 30 XP base")
 	dummy_boss.free()
