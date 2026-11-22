@@ -43,6 +43,8 @@ const BACKGROUNDS = [
 ]
 const ROOM_MOD = preload("res://scripts/systems/room_modifier.gd")
 const IDENTITY = preload("res://scripts/systems/member_identity.gd")
+const PLAYTEST = preload("res://scripts/systems/playtest_log.gd")
+const BOSS_SCRIPTS = preload("res://scripts/systems/boss_scripts.gd")
 var stage_index := 0
 var stage_selector: OptionButton
 # Contenedor de todos los actores (jugador + enemigos); ordena por Y.
@@ -88,6 +90,7 @@ func _ready() -> void:
 	room_kills = 0
 	player.items.changed.connect(_autosave_session)
 	_apply_meta_bonuses()
+	PLAYTEST.begin_run(player.meta_path, run.run_seed)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if run.current_room() != null:
 		var room: RoomData = run.current_room()
@@ -223,6 +226,7 @@ func _begin_current_room() -> void:
 	select_stage(_biome_for(room))
 	awaiting_reward = false
 	awaiting_floor_start = false
+	PLAYTEST.note_floor(run.current_floor)
 	if room.room_type == "START" and _intro_floor_shown != run.current_floor:
 		_intro_floor_shown = run.current_floor
 		var stage := IDENTITY.stage_title(_biome_for(room), player.meta_path)
@@ -320,10 +324,12 @@ func _spawn_extra_hazards_from_mod(rad: float, dmg: float) -> void:
 		_spawn_hazard_at(at, rad, dmg, "normal")
 
 func _apply_room_modifier(room: RoomData) -> void:
-	var mod_id := ROOM_MOD.pick(rng, run.current_floor, room.room_type)
+	var biome := _biome_for(room)
+	var mod_id := ROOM_MOD.pick(rng, run.current_floor, room.room_type, biome)
 	var def: Dictionary = ROOM_MOD.apply(player, mod_id)
 	if def.is_empty():
 		return
+	PLAYTEST.note_mod(mod_id)
 	SFX.play("setpiece")
 	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -110), str(def.get("label", "MOD")), IDENTITY.path_color(player.meta_path))
 	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -85), str(def.get("desc", "")), Color("ffffff", 0.85))
@@ -404,30 +410,28 @@ func _spawn_boss() -> void:
 	spawned += 1
 	_spawn_room_hazards(run.current_room())
 
-# Set piece de jefe: phase_storm rota patrón por fase (anillo → diagonal → lanes).
+# Fase de jefe: script propio por boss_id (patrones/buffs distintos, no clones).
 func _on_boss_phase_changed(phase: int) -> void:
 	if phase < 2:
 		return
-	SFX.play("phase")
-	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -100), "¡FASE %d!" % phase, Color("ff5964"))
-	VISUALS.screen_pulse(self, Color("c77dff", 0.32), 0.4)
-	VISUALS.nudge(self as Node2D, 8.0, 0.22)
-	var has_storm := false
+	var boss_enemy: HarmonyEnemy = null
 	for node in get_tree().get_nodes_in_group("enemies"):
-		if node is HarmonyEnemy and node.is_boss and node._has_ability("phase_storm"):
-			has_storm = true
+		if node is HarmonyEnemy and node.is_boss:
+			boss_enemy = node
 			break
-	if not has_storm:
+	if boss_enemy == null:
 		return
-	var rad := 70.0 + run.current_floor * 1.2
-	var dmg := 9.0 + run.current_floor * 0.5 + CombatConstants.BOSS_STORM_DMG_BONUS
-	var storm_pat := "ring"
-	match phase:
-		2: storm_pat = "ring"
-		3: storm_pat = "diagonal"
-		_: storm_pat = "lanes"
-	var count := 3 if storm_pat == "ring" else 4
-	_spawn_hazard_pattern(storm_pat, count, rad, dmg, "storm")
+	var boss_id := boss_enemy.boss_data.id if boss_enemy.boss_data != null else ""
+	PLAYTEST.note_boss_phase(boss_id, phase)
+	SFX.play(BOSS_SCRIPTS.sfx_for(boss_id))
+	var script: Dictionary = BOSS_SCRIPTS.pattern_for(boss_id, phase)
+	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -100), "¡FASE %d! · %s" % [phase, str(script.get("label", ""))], Color("ff5964"))
+	VISUALS.screen_pulse(self, Color("c77dff", 0.32), 0.4)
+	VISUALS.nudge(self, 8.0, 0.22)
+	BOSS_SCRIPTS.apply_phase_buff(boss_enemy, boss_id, phase)
+	var rad := (70.0 + run.current_floor * 1.2) * float(script.get("rad_mult", 1.0))
+	var dmg := (9.0 + run.current_floor * 0.5 + CombatConstants.BOSS_STORM_DMG_BONUS) * float(script.get("dmg_mult", 1.0))
+	_spawn_hazard_pattern(str(script.get("pattern", "ring")), int(script.get("count", 3)), rad, dmg, str(script.get("style", "storm")))
 
 # Cada eliminación: contabiliza, aplica efectos del inventario, dispara la
 # siguiente oleada si procede, o completa la sala cuando ya no hay enemigos.
@@ -454,6 +458,7 @@ func current_room_type() -> String:
 
 # Completa una sala de combate: marca en el grafo y abre la recompensa.
 func _handle_room_cleared() -> void:
+	PLAYTEST.note_room_clear()
 	run.complete_current()
 	awaiting_reward = true
 	var cleared := run.current_room()
@@ -503,6 +508,7 @@ func _refresh_path_bonuses() -> void:
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del
 # piso (avanzar) ocurre al pulsar continuar en la transición.
 func _handle_boss_cleared() -> void:
+	PLAYTEST.note_boss_clear()
 	awaiting_reward = true
 	awaiting_floor_start = true
 	item_ui.queue_reward("boss")
@@ -690,12 +696,21 @@ func start_next_room() -> void:
 	go_to_room(options[0].room_id)
 
 func _on_game_over() -> void:
+	PLAYTEST.note_death()
+	var summary := _run_summary()
+	var log_path := PLAYTEST.finish_run(false, summary)
+	summary["playtest_log"] = log_path
+	summary["playtest_coverage"] = PLAYTEST.coverage_summary()
 	SESSION.clear()
-	combat_hud.show_run_end(false, _run_summary())
+	combat_hud.show_run_end(false, summary)
 
 func _on_run_completed() -> void:
+	var summary := _run_summary()
+	var log_path := PLAYTEST.finish_run(true, summary)
+	summary["playtest_log"] = log_path
+	summary["playtest_coverage"] = PLAYTEST.coverage_summary()
 	SESSION.clear()
-	combat_hud.show_run_end(true, _run_summary())
+	combat_hud.show_run_end(true, summary)
 
 func _run_summary() -> Dictionary:
 	var item_count := 0
@@ -708,6 +723,7 @@ func _run_summary() -> Dictionary:
 		"bosses": run.bosses_defeated.size() if run != null else 0,
 		"coins": player.items.coins if is_instance_valid(player) else 0,
 		"items": item_count,
+		"path": player.meta_path if is_instance_valid(player) else "",
 	}
 
 # --- Persistencia de sesión -----------------------------------------------

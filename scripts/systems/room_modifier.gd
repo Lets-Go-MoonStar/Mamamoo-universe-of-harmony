@@ -50,7 +50,20 @@ static func all_ids() -> Array[String]:
 		ids.append(str(key))
 	return ids
 
-static func pick(rng: RandomNumberGenerator, floor_number: int, room_type: String) -> String:
+# Bioma → mods preferidos (longevidad: misma sala, reglas distintas por stage).
+const BIOME_BIAS := {
+	0: ["encore_pressure", "spotlight"], # eclipse arena
+	1: ["spotlight", "high_tempo"], # starlight
+	2: ["muted_stage", "dense_fog"], # sunrise
+	3: ["dense_fog", "harmony_drain"], # lunar
+	4: ["harmony_drain", "muted_stage"], # crystal
+	5: ["high_tempo", "encore_pressure"], # ignite
+	6: ["high_tempo", "spotlight"], # neon
+	7: ["harmony_drain", "encore_pressure"], # void
+	8: ["spotlight", "encore_pressure"], # throne
+}
+
+static func pick(rng: RandomNumberGenerator, floor_number: int, room_type: String, biome_index: int = 0) -> String:
 	if floor_number < 5:
 		return ""
 	if room_type == "COMBAT" and rng.randf() > 0.40:
@@ -61,12 +74,19 @@ static func pick(rng: RandomNumberGenerator, floor_number: int, room_type: Strin
 		return ""
 	var ids: Array[String] = []
 	for id in all_ids():
-		# Late floors desbloquean pressure/drain.
 		if floor_number < 8 and id in ["encore_pressure", "harmony_drain"]:
 			continue
 		ids.append(id)
 	if ids.is_empty():
 		return ""
+	# 60% chance de preferir bias de bioma si el mod está desbloqueado.
+	var bias: Array = BIOME_BIAS.get(biome_index % 9, [])
+	var preferred: Array[String] = []
+	for id in bias:
+		if ids.has(str(id)):
+			preferred.append(str(id))
+	if not preferred.is_empty() and rng.randf() < 0.60:
+		return preferred[rng.randi_range(0, preferred.size() - 1)]
 	return ids[rng.randi_range(0, ids.size() - 1)]
 
 static func apply(player: Node, mod_id: String) -> Dictionary:

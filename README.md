@@ -106,7 +106,10 @@ $GODOT --headless --path . --fixed-fps 60 --script res://tests/spectacle_builds_
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/set_pieces_smoke.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/identity_mods_smoke.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/balance_audit.gd
+$GODOT --headless --path . --fixed-fps 60 --script res://tests/art_playtest_longevity_smoke.gd
 ```
+
+Human playtest protocol: `docs/PLAYTEST_5X_RUTA.md`.
 
 `floor_system.gd` cubre el sistema procedural: reproducibilidad por seed,
 validez del grafo, presupuesto/oleadas, rarezas y flujo completo (recompensa,
@@ -150,3 +153,4 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 14. ~~Set pieces + rutas v2.~~ (élite cruz, phase_storm en jefes, evento path_encore, sinergias por ruta)
 15. ~~Show / variedad / balance arenas.~~ (patrones rotativos, SFX phase/setpiece, pulse/nudge, caps CombatConstants, Lane Diva / Rift Caller)
 16. ~~Identidad + modifiers + auditoría.~~ (`MemberIdentity`, 6 room mods, `balance_audit` 5×ruta)
+17. ~~Arte/SFX slots + playtest humano + longevidad.~~ (`assets/sfx/`, `PlaytestLog`, mods×bioma, `BossScripts`)

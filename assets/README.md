@@ -23,3 +23,15 @@ blocked until the art pack is provided (same relative paths).
 
 Do not commit large binary art unless the team agrees on Git LFS or an external
 asset bundle.
+
+## Audio (`assets/sfx/`)
+
+`Sfx.play(kind)` loads `res://assets/sfx/{kind}.wav` (or `.ogg`) **first**, then
+falls back to procedural tones. Generate starter WAVs:
+
+```sh
+python tools/generate_sfx_placeholders.py
+```
+
+Replace those files with real recordings keeping the same filenames (`solar.wav`,
+`phase.wav`, `clear.wav`, …). See `assets/sfx/README.md`.

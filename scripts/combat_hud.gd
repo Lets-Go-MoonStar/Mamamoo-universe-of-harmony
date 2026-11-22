@@ -278,7 +278,14 @@ func show_run_end(won: bool, summary: Dictionary) -> void:
 	var meta: Dictionary = META.record_run(won, int(summary.get("floor", 1)), int(summary.get("rooms", 0)))
 	end_art.texture = VICTORY_ART if won else DEFEAT_ART
 	end_title.text = "VICTORIA · HARMONY CLEAR" if won else "EQUIPO DERROTADO"
-	end_body.text = "Piso %d · Salas %d · Jefes %d · Monedas %d · Ítems %d\nColección %d · Fragmentos +%d (total %d) · Mejor piso %d\nRuns %d (W %d / L %d)" % [
+	var cov: Dictionary = summary.get("playtest_coverage", {})
+	var cov_line := ""
+	if not cov.is_empty():
+		cov_line = "\nPlaytest 5×ruta: S%d M%d W%d H%d · log user://playtest_runs.jsonl" % [
+			int(cov.get("solar", 0)), int(cov.get("moonbyul", 0)),
+			int(cov.get("wheein", 0)), int(cov.get("hwasa", 0)),
+		]
+	end_body.text = "Piso %d · Salas %d · Jefes %d · Monedas %d · Ítems %d\nColección %d · Fragmentos +%d (total %d) · Mejor piso %d\nRuns %d (W %d / L %d)%s" % [
 		int(summary.get("floor", 1)),
 		int(summary.get("rooms", 0)),
 		int(summary.get("bosses", 0)),
@@ -291,6 +298,7 @@ func show_run_end(won: bool, summary: Dictionary) -> void:
 		int(meta.get("runs_played", 0)),
 		int(meta.get("runs_won", 0)),
 		int(meta.get("runs_lost", 0)),
+		cov_line,
 	]
 	defeat_panel.show()
 	pause_panel.hide()
