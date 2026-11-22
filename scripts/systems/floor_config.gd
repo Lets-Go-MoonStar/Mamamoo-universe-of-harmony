@@ -24,6 +24,7 @@ extends Resource
 
 # Piso por defecto para tramos sin archivo: respeta los rangos de la
 # especificación (1-2: 7-10, 3-7: 10-15, 8-13: 20-25) y el escalado hp/dmg.
+# Los .tres en resources/floor_configs/ tienen prioridad al cargar.
 static func make_default(floor_number: int) -> FloorConfig:
 	var cfg := FloorConfig.new()
 	cfg.floor_number = floor_number
@@ -31,29 +32,71 @@ static func make_default(floor_number: int) -> FloorConfig:
 		1, 2:
 			cfg.min_rooms = 7
 			cfg.max_rooms = 10
+			cfg.enemy_budget = 5 if floor_number == 1 else 6
+			cfg.elite_chance = 0.14 if floor_number == 1 else 0.17
+			cfg.event_chance = 0.14
+			cfg.shop_chance = 0.15
+			cfg.reward_chance = 0.15
+			cfg.route_branch_chance = 0.50 if floor_number == 1 else 0.55
 		3, 4, 5, 6, 7:
 			cfg.min_rooms = 10
 			cfg.max_rooms = 15
+			cfg.enemy_budget = 7 + int((floor_number - 3) / 2)
+			cfg.elite_chance = 0.20 + (floor_number - 3) * 0.015
+			cfg.event_chance = 0.16
+			cfg.shop_chance = 0.17
+			cfg.reward_chance = 0.16
+			cfg.route_branch_chance = 0.58
 		_:
 			cfg.min_rooms = 20
 			cfg.max_rooms = 25
+			cfg.enemy_budget = 10 + (floor_number - 8)
+			cfg.elite_chance = 0.28 + (floor_number - 8) * 0.01
+			cfg.event_chance = 0.14
+			cfg.shop_chance = 0.15
+			cfg.reward_chance = 0.14
+			cfg.route_branch_chance = 0.62
 	cfg.difficulty_multiplier = 1.0 + (floor_number - 1) * 0.08
-	cfg.damage_multiplier = 1.0 + (floor_number - 1) * 0.06
+	cfg.damage_multiplier = 1.0 + (floor_number - 1) * 0.055
 	cfg.biome_index = (floor_number - 1) % 9
-	cfg.route_branch_chance = 0.55
-	# Pool completo disponible para pisos sin archivo propio (4-13): el
-	# director de encuentros filtra por rango de piso de cada variante.
-	cfg.enemy_pool = [
+	cfg.enemy_pool = enemy_pool_for(floor_number)
+	cfg.boss_pool = boss_pool_for(floor_number)
+	return cfg
+
+static func enemy_pool_for(floor_number: int) -> Array[String]:
+	var early: Array[String] = [
 		"res://resources/enemy_pool/echo.tres",
 		"res://resources/enemy_pool/echo_swift.tres",
+		"res://resources/enemy_pool/feedback.tres",
+		"res://resources/enemy_pool/mute.tres",
+	]
+	var mid: Array[String] = [
 		"res://resources/enemy_pool/echo_armored.tres",
+		"res://resources/enemy_pool/tuner.tres",
 		"res://resources/enemy_pool/echo_corrupted.tres",
 		"res://resources/enemy_pool/echo_elite.tres",
-		"res://resources/enemy_pool/feedback.tres",
-		"res://resources/enemy_pool/feedback_elite.tres",
-		"res://resources/enemy_pool/mute.tres",
-		"res://resources/enemy_pool/mute_elite.tres",
-		"res://resources/enemy_pool/tuner.tres",
 	]
-	cfg.boss_pool = ["res://resources/boss_pool/eclipse.tres"]
-	return cfg
+	var late: Array[String] = [
+		"res://resources/enemy_pool/feedback_elite.tres",
+		"res://resources/enemy_pool/mute_elite.tres",
+	]
+	var pool: Array[String] = early.duplicate()
+	if floor_number >= 2:
+		pool.append_array(mid.slice(0, 2))
+	if floor_number >= 3:
+		pool.append_array(mid.slice(2, 4))
+	if floor_number >= 4:
+		pool.append_array(late)
+	return pool
+
+static func boss_pool_for(floor_number: int) -> Array[String]:
+	var bosses: Array[String] = []
+	if floor_number <= 2:
+		bosses.append("res://resources/boss_pool/overlord.tres")
+	if floor_number >= 2 and floor_number <= 4:
+		bosses.append("res://resources/boss_pool/critic.tres")
+	if floor_number >= 3:
+		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if bosses.is_empty():
+		bosses.append("res://resources/boss_pool/eclipse.tres")
+	return bosses

@@ -13,9 +13,31 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def png_bytes(width: int, height: int, rgba: tuple[int, int, int, int] = (40, 40, 60, 255)) -> bytes:
+def png_bytes(
+	width: int,
+	height: int,
+	rgba: tuple[int, int, int, int] = (40, 40, 60, 255),
+	*,
+	gradient: bool = True,
+) -> bytes:
+	"""Solid or vertical gradient PNG (no deps). Gradient helps tell sheets apart."""
 	r, g, b, a = rgba
-	raw = b"".join(b"\x00" + bytes([r, g, b, a]) * width for _ in range(height))
+	rows: list[bytes] = []
+	for y in range(height):
+		t = y / max(height - 1, 1)
+		fr = max(0, min(255, int(r * (0.55 + 0.45 * (1.0 - t)))))
+		fg = max(0, min(255, int(g * (0.55 + 0.45 * t))))
+		fb = max(0, min(255, int(b * (0.70 + 0.30 * (1.0 - abs(t - 0.5) * 2)))))
+		if not gradient:
+			fr, fg, fb = r, g, b
+		# Light checker every 32px so atlas cells are visible in placeholders.
+		pix = bytearray()
+		for x in range(width):
+			cell = ((x // 32) + (y // 32)) & 1
+			shade = 18 if cell else 0
+			pix.extend((min(255, fr + shade), min(255, fg + shade), min(255, fb + shade), a))
+		rows.append(b"\x00" + bytes(pix))
+	raw = b"".join(rows)
 
 	def chunk(tag: bytes, data: bytes) -> bytes:
 		return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data) & 0xFFFFFFFF)
@@ -71,20 +93,23 @@ def collect_paths() -> set[str]:
 
 
 def main() -> None:
+	import sys
+
+	force = "--force" in sys.argv
 	paths = collect_paths()
 	created = 0
 	skipped = 0
 	for rel in sorted(paths):
 		out = ROOT / rel
-		if out.exists() and out.stat().st_size > 0:
+		if out.exists() and out.stat().st_size > 0 and not force:
 			skipped += 1
 			continue
 		out.parent.mkdir(parents=True, exist_ok=True)
 		width, height, color = size_for(rel)
-		out.write_bytes(png_bytes(width, height, color))
+		out.write_bytes(png_bytes(width, height, color, gradient=True))
 		created += 1
 		print(f"+ {rel} ({width}x{height})")
-	print(f"required={len(paths)} created={created} skipped_existing={skipped}")
+	print(f"required={len(paths)} created={created} skipped_existing={skipped} force={force}")
 
 
 if __name__ == "__main__":
