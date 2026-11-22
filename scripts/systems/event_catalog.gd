@@ -6,6 +6,12 @@ class_name EventCatalog
 extends RefCounted
 
 # Cada entrada: title + choices[{text, id}]. Los ids se resuelven en main.
+static func for_floor(floor_number: int) -> Array:
+	var pool: Array = all()
+	if floor_number >= 8:
+		pool.append_array(late_events())
+	return pool
+
 static func all() -> Array:
 	return [
 		{
@@ -60,6 +66,38 @@ static func all() -> Array:
 				{"text": "Sincronizar (+20 Armonía, +20 Compostura)", "effect": "sync"},
 				{"text": "Silenciar el eco (+8 monedas)", "effect": "coins_8"},
 				{"text": "Ignorar", "effect": "noop"},
+			],
+		},
+	]
+
+# Eventos exclusivos del tramo largo (pisos 8–13).
+static func late_events() -> Array:
+	return [
+		{
+			"id": "eclipse_rite",
+			"title": "Rito del eclipse\nLa luz se parte; el vacío ofrece un pacto.",
+			"choices": [
+				{"text": "Aceptar la marca (−25 Voz, +1 objeto RARO+)", "effect": "eclipse_rite"},
+				{"text": "Ofrecer Compostura completa (+2 llaves)", "effect": "composure_for_keys"},
+				{"text": "Romper el rito (+30% Voz)", "effect": "heal_30"},
+			],
+		},
+		{
+			"id": "void_bargain",
+			"title": "Regateo del Void Conductor\nUn metrónomo invisible marca el precio.",
+			"choices": [
+				{"text": "Pagar 12 monedas (+1 ticket y +40 Compostura)", "effect": "void_pay"},
+				{"text": "Arriesgar (−10 Voz, +15 monedas)", "effect": "void_gamble"},
+				{"text": "Retirarse", "effect": "noop"},
+			],
+		},
+		{
+			"id": "encore_trial",
+			"title": "Prueba del encore\nSolo una integrante puede brillar ahora.",
+			"choices": [
+				{"text": "Solo activa (+35 Compostura, −8 Voz a las demás)", "effect": "encore_solo"},
+				{"text": "Ensayo grupal (+15% Voz al equipo)", "effect": "heal_15"},
+				{"text": "Cancelar la función", "effect": "noop"},
 			],
 		},
 	]

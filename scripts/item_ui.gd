@@ -328,7 +328,7 @@ func show_member_selection() -> void:
 
 # Inventario (objetos poseídos) o catálogo completo (los 32, I para abrir).
 func open_inventory() -> void:
-	if game.player.team_defeated or (overlay.visible and current_kind not in ["inventory", "phase3_gallery"]): return
+	if game.player.team_defeated or (overlay.visible and current_kind not in ["inventory", "phase3_gallery", "meta_upgrades"]): return
 	current_kind = "inventory"
 	clear()
 	var meta: Dictionary = META.load_data()
@@ -339,6 +339,7 @@ func open_inventory() -> void:
 	content.add_child(tabs)
 	button("Mis objetos", func(): catalog_mode = false; SFX.play("ui"); open_inventory(), tabs)
 	button("Catálogo", func(): catalog_mode = true; SFX.play("ui"); open_inventory(), tabs)
+	button("Mejoras ✦", open_meta_upgrades, tabs)
 	button("Galería Fase 3", open_phase3_gallery, tabs)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size.y = 305
@@ -368,6 +369,33 @@ func open_inventory() -> void:
 		icon.tooltip_text = row.tooltip_text
 		text.tooltip_text = row.tooltip_text
 	button("Volver al combate [I]", close)
+	show_panel()
+
+func open_meta_upgrades() -> void:
+	if game.player.team_defeated:
+		return
+	current_kind = "meta_upgrades"
+	clear()
+	var meta: Dictionary = META.load_data()
+	label("Mejoras permanentes · ✦ %d fragmentos" % int(meta.get("star_fragments", 0)))
+	label("Se compran entre runs y aplican al empezar la siguiente.", content, 13)
+	for id in META.UPGRADE_DEFS:
+		var def: Dictionary = META.UPGRADE_DEFS[id]
+		var level: int = META.upgrade_level(id)
+		var max_level: int = int(def.get("max", 1))
+		var cost: int = META.upgrade_cost(id)
+		var row_text := "%s · %d/%d · %s" % [str(def.get("label", id)), level, max_level, str(def.get("desc", ""))]
+		if level >= max_level:
+			label(row_text + " · MÁX", content, 14)
+		else:
+			var buy := button("Comprar (%d ✦) — %s" % [cost, row_text], func():
+				if META.buy_upgrade(id):
+					SFX.play("pickup")
+					open_meta_upgrades()
+				else:
+					SFX.play("ui"), content)
+			buy.disabled = not META.can_buy_upgrade(id)
+	button("Volver al inventario", open_inventory)
 	show_panel()
 
 func open_phase3_gallery() -> void:
@@ -537,12 +565,14 @@ func _roll_shop_offers() -> Array:
 	return offers
 
 func _shop_price(rarity: String) -> int:
+	var base := 20
 	match rarity:
-		"COMMON": return 3
-		"UNCOMMON": return 5
-		"RARE": return 8
-		"EPIC": return 12
-		_: return 20
+		"COMMON": base = 3
+		"UNCOMMON": base = 5
+		"RARE": base = 8
+		"EPIC": base = 12
+		_: base = 20
+	return maxi(1, base - int(system.shop_discount))
 
 func _show_shop() -> void:
 	clear()

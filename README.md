@@ -141,3 +141,4 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 9. ~~Más enemigos/jefe data-driven.~~ (`resonance_drone`, `pulse_swarm`, `void_conductor`)
 10. ~~Audio placeholder.~~ (`Sfx` tonos procedurales)
 11. ~~Pulido UX.~~ (Esc pausa, intros de piso/jefe, tooltips de inventario)
+12. ~~Profundidad de jugabilidad.~~ (foes firmados, eventos late, feedback visual, upgrades meta, picos por banda)

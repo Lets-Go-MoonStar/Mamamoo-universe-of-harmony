@@ -27,6 +27,7 @@ const SESSION = preload("res://scripts/systems/session_store.gd")
 const EVENT_CATALOG = preload("res://scripts/systems/event_catalog.gd")
 const ITEM_CATALOG = preload("res://scripts/item_catalog.gd")
 const SFX = preload("res://scripts/systems/sfx.gd")
+const META = preload("res://scripts/systems/meta_progress.gd")
 
 const BACKGROUNDS = [
 	preload("res://assets/backgrounds/eclipse_arena_background.png"),
@@ -84,6 +85,7 @@ func _ready() -> void:
 	get_tree().set_meta("run_seed", run.run_seed)
 	room_kills = 0
 	player.items.changed.connect(_autosave_session)
+	_apply_meta_bonuses()
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	if run.current_room() != null:
 		var room: RoomData = run.current_room()
@@ -313,7 +315,19 @@ func _handle_room_cleared() -> void:
 	room_number = run.rooms_completed + 1
 	player.invulnerable = 1.5
 	SFX.play("clear")
+	VISUALS.burst(self, VISUALS.COMBAT, 0, 4, 90.0, player.global_position - global_position + Vector2(0, -20), 0.4)
+	VISUALS.float_text(self, player.global_position + Vector2(0, -55), "SALA LIMPIA", Color("ffd166"))
 	_autosave_session()
+
+func _apply_meta_bonuses() -> void:
+	var bonuses: Dictionary = META.run_bonuses()
+	player.voice_max += float(bonuses.get("voice_max_bonus", 0.0))
+	for i in range(4):
+		player.member_voice[i] = player.voice_max
+	player.items.coins += int(bonuses.get("start_coins", 0))
+	player.composure_gain_mult = float(bonuses.get("composure_mult", 1.0))
+	player.items.shop_discount = int(bonuses.get("shop_discount", 0))
+	player._emit_stats()
 
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del
 # piso (avanzar) ocurre al pulsar continuar en la transición.
@@ -352,7 +366,7 @@ func _enter_rest_room() -> void:
 
 # Evento: catálogo con varias decisiones (riesgo/beneficio).
 func _enter_event_room() -> void:
-	var catalog: Array = EVENT_CATALOG.all()
+	var catalog: Array = EVENT_CATALOG.for_floor(run.current_floor)
 	var pick: Dictionary = catalog[run.rng.randi_range(0, catalog.size() - 1)]
 	var choices: Array = []
 	for raw in pick.get("choices", []):
@@ -413,8 +427,29 @@ func _apply_event_effect(effect_id: String) -> void:
 			player.gain_composure(20.0)
 		"coins_8":
 			player.items.coins += 8
+		"eclipse_rite":
+			player.voice = maxf(1.0, player.voice - 25.0)
+			_grant_random_item("RARE")
+		"composure_for_keys":
+			if player.composure >= 50.0:
+				player.composure = 0.0
+				player.items.keys += 2
+		"void_pay":
+			if player.items.coins >= 12:
+				player.items.coins -= 12
+				player.items.tickets += 1
+				player.gain_composure(40.0)
+		"void_gamble":
+			player.voice = maxf(1.0, player.voice - 10.0)
+			player.items.coins += 15
+		"encore_solo":
+			player.gain_composure(35.0)
+			for i in range(4):
+				if i != player.active_index and player.member_voice[i] > 0.0:
+					player.member_voice[i] = maxf(1.0, player.member_voice[i] - 8.0)
 		_:
 			pass
+	VISUALS.float_text(self, player.global_position + Vector2(0, -50), "EVENTO", Color("4cc9f0"))
 	player._emit_stats()
 
 # Otorga un ítem adquirible al azar; min_rarity filtra rareza mínima opcional.

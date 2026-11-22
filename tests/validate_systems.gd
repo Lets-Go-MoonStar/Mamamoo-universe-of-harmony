@@ -15,6 +15,9 @@ func _initialize() -> void:
 		"res://resources/enemy_pool/tuner.tres",
 		"res://resources/enemy_pool/resonance_drone.tres",
 		"res://resources/enemy_pool/pulse_swarm.tres",
+		"res://resources/enemy_pool/hex_echo.tres",
+		"res://resources/enemy_pool/mirror_siren.tres",
+		"res://resources/enemy_pool/beat_crusher.tres",
 	]
 	for path in pools:
 		var data: EnemyData = load(path)
@@ -27,6 +30,7 @@ func _initialize() -> void:
 		"res://resources/boss_pool/critic.tres",
 		"res://resources/boss_pool/eclipse.tres",
 		"res://resources/boss_pool/void_conductor.tres",
+		"res://resources/boss_pool/crystal_warden.tres",
 	]
 	for path in bosses:
 		var b: BossData = load(path)

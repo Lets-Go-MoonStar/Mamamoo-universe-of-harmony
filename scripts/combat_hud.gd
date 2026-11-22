@@ -44,6 +44,7 @@ var end_art: TextureRect
 var summary_art: TextureRect
 var player: HarmonyPlayer
 var paused_game := false
+var hurt_vignette: ColorRect
 
 # Recorta una región de una hoja de sprites en un AtlasTexture.
 func atlas(sheet: Texture2D, region: Rect2) -> AtlasTexture:
@@ -127,6 +128,11 @@ func setup(target: HarmonyPlayer) -> void:
 	_create_defeat_panel()
 	_create_pause_panel()
 	_create_intro_panel()
+	hurt_vignette = ColorRect.new()
+	hurt_vignette.color = Color(0.55, 0.05, 0.08, 0.0)
+	hurt_vignette.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	hurt_vignette.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(hurt_vignette)
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	set_process(true)
 
@@ -135,6 +141,9 @@ func _process(delta: float) -> void:
 		intro_timer = maxf(0.0, intro_timer - delta)
 		if intro_timer <= 0.0 and is_instance_valid(intro_panel):
 			intro_panel.hide()
+	if is_instance_valid(hurt_vignette) and is_instance_valid(player):
+		var a := clampf(player.hurt_flash * 1.6, 0.0, 0.35)
+		hurt_vignette.color = Color(0.55, 0.05, 0.08, a)
 
 # Refresca el HUD con el diccionario emitido por el jugador.
 func update_stats(data: Dictionary, defeated: int) -> void:
