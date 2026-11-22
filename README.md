@@ -136,3 +136,8 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 4. ~~Persistencia de sesión (inventario entre partidas).~~ (`scripts/systems/session_store.gd`, `user://mamamoo_session.json`)
 5. ~~EVENT/REWARD ricos + floors 4-13 + balance 1-3.~~ (`EventCatalog`, `open_reward_special`, `floor_1..13.tres`)
 6. Arte final (bloqueado: falta el pack ilustrado; placeholders con `--force` mejorados)
+7. ~~Pantallas de fin de run + resumen.~~ (`combat_hud.show_run_end`)
+8. ~~Meta-progresión ligera.~~ (`MetaProgress` / `user://mamamoo_meta.json`)
+9. ~~Más enemigos/jefe data-driven.~~ (`resonance_drone`, `pulse_swarm`, `void_conductor`)
+10. ~~Audio placeholder.~~ (`Sfx` tonos procedurales)
+11. ~~Pulido UX.~~ (Esc pausa, intros de piso/jefe, tooltips de inventario)

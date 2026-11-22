@@ -10,6 +10,8 @@
 extends Node
 
 const VISUALS = preload("res://scripts/visual_assets.gd")
+const META = preload("res://scripts/systems/meta_progress.gd")
+const SFX = preload("res://scripts/systems/sfx.gd")
 
 signal changed
 signal reward_requested(kind: String)
@@ -124,6 +126,8 @@ func acquire(id: String, selected: int = -1, second: int = -1) -> bool:
 	if id == "skill_scroll" and (selected < 0 or selected > 3):
 		return false
 	owned[id] = count(id) + 1
+	META.discover(id)
+	SFX.play("pickup")
 	match id:
 		"star_coin": coins += 1
 		"golden_key": keys += 1
@@ -325,6 +329,7 @@ func start_adlib() -> void:
 	adlib_extension = 0.0
 	if count("curtain_call_brooch") > 0:
 		energy = minf(100.0, energy + 25.0)
+	SFX.play("adlib")
 	changed.emit()
 	player._emit_stats()
 

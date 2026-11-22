@@ -13,6 +13,8 @@ const VISUALS = preload("res://scripts/visual_assets.gd")
 
 const CATALOG = preload("res://scripts/item_catalog.gd")
 const REWARD_MANAGER = preload("res://scripts/systems/reward_manager.gd")
+const META = preload("res://scripts/systems/meta_progress.gd")
+const SFX = preload("res://scripts/systems/sfx.gd")
 const FLOOR_MAP = preload("res://scripts/floor_map.gd")
 var game
 # Referencia al sistema de ítems de la partida (run_items del jugador).
@@ -329,11 +331,14 @@ func open_inventory() -> void:
 	if game.player.team_defeated or (overlay.visible and current_kind not in ["inventory", "phase3_gallery"]): return
 	current_kind = "inventory"
 	clear()
-	label("Inventario · %d monedas · %d llaves · %d tickets" % [system.coins, system.keys, system.tickets])
+	var meta: Dictionary = META.load_data()
+	label("Inventario · %d monedas · %d llaves · %d tickets · Colección %d · ✦ %d" % [
+		system.coins, system.keys, system.tickets, META.discovered_count(), int(meta.get("star_fragments", 0))
+	])
 	var tabs := HBoxContainer.new()
 	content.add_child(tabs)
-	button("Mis objetos", func(): catalog_mode = false; open_inventory(), tabs)
-	button("Catálogo (32)", func(): catalog_mode = true; open_inventory(), tabs)
+	button("Mis objetos", func(): catalog_mode = false; SFX.play("ui"); open_inventory(), tabs)
+	button("Catálogo", func(): catalog_mode = true; SFX.play("ui"); open_inventory(), tabs)
 	button("Galería Fase 3", open_phase3_gallery, tabs)
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size.y = 305
@@ -346,15 +351,22 @@ func open_inventory() -> void:
 		var quantity: int = system.count(entry.id)
 		if entry.id == "star_coin": quantity = system.coins
 		if quantity == 0 and not catalog_mode: continue
+		var known: bool = quantity > 0 or META.is_discovered(entry.id)
 		var row := HBoxContainer.new()
 		list.add_child(row)
 		var icon := TextureRect.new()
 		icon.texture = CATALOG.icon(entry.id)
 		icon.custom_minimum_size = Vector2(58, 58)
 		icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon.modulate = Color.WHITE if known else Color(0.25, 0.25, 0.3)
 		row.add_child(icon)
-		var text := label("%s · %s · x%d\n%s" % [entry.display_name, entry.rarity, quantity, entry.description], row, 15)
+		var title: String = str(entry.display_name) if known else "???"
+		var desc: String = str(entry.description) if known else "Aún no descubierto en ninguna run."
+		var text := label("%s · %s · x%d\n%s" % [title, entry.rarity if known else "?", quantity, desc], row, 15)
 		text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.tooltip_text = "%s\n%s" % [title, desc]
+		icon.tooltip_text = row.tooltip_text
+		text.tooltip_text = row.tooltip_text
 	button("Volver al combate [I]", close)
 	show_panel()
 

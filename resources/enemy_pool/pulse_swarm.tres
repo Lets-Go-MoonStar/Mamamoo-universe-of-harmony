@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pulse_swarm"
+display_name = "Pulse Swarm"
+archetype = "swarm"
+max_hp = 28.0
+damage = 7.0
+speed = 130.0
+attack_range = 28.0
+attack_cooldown = 0.55
+difficulty_cost = 1
+abilities = Array[String]([])
+sprite_index = 5
+min_floor = 6
+max_floor = 13

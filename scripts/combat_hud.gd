@@ -5,7 +5,7 @@
 # vía AtlasTexture:
 #   - barras de Voz y Armonía, nombre de integrante, cadena y cooldowns,
 #   - botones de cambio de integrante (1-4) con retrato y marco propio,
-#   - panel de derrota con botón REINICIAR.
+#   - paneles de derrota / victoria / resumen, pausa e intros de piso/jefe.
 # ---------------------------------------------------------------------------
 extends Control
 
@@ -13,6 +13,15 @@ const HUD_SHEET = preload("res://assets/ui/ui_hud_spritesheet.png")
 const MENU_SHEET = preload("res://assets/ui/ui_menus_spritesheet.png")
 const PORTRAITS = preload("res://assets/ui/portraits/member_portraits_atlas.png")
 const FRAMES = preload("res://assets/ui/member_frames_hud_atlas.png")
+const VICTORY_ART = preload("res://assets/ui/screens/victory_reference.png")
+const DEFEAT_ART = preload("res://assets/ui/screens/game_over_reference.png")
+const SUMMARY_ART = preload("res://assets/ui/screens/run_summary_reference.png")
+const PAUSE_ART = preload("res://assets/ui/screens/pause_reference.png")
+const FLOOR_INTRO_ART = preload("res://assets/ui/screens/floor_intro_reference.png")
+const BOSS_INTRO_ART = preload("res://assets/ui/screens/boss_intro_reference.png")
+const META = preload("res://scripts/systems/meta_progress.gd")
+const SFX = preload("res://scripts/systems/sfx.gd")
+const SESSION = preload("res://scripts/systems/session_store.gd")
 
 var voice_bar: TextureProgressBar
 var harmony_bar: TextureProgressBar
@@ -24,7 +33,17 @@ var cooldown_text: Label
 var member_buttons: Array[TextureButton] = []
 var member_health_labels: Array[Label] = []
 var defeat_panel: Control
+var pause_panel: Control
+var intro_panel: Control
+var intro_title: Label
+var intro_body: Label
+var intro_timer := 0.0
+var end_title: Label
+var end_body: Label
+var end_art: TextureRect
+var summary_art: TextureRect
 var player: HarmonyPlayer
+var paused_game := false
 
 # Recorta una región de una hoja de sprites en un AtlasTexture.
 func atlas(sheet: Texture2D, region: Rect2) -> AtlasTexture:
@@ -104,8 +123,18 @@ func setup(target: HarmonyPlayer) -> void:
 		picture(self, atlas(FRAMES, Rect2(0, frame_rows[index], 250, frame_rows[index + 1] - frame_rows[index])), Rect2(20 + index * 112, 590, 72, 72))
 		label_at(self, "%d · %s" % [index + 1, names[index]], Rect2(20 + index * 112, 659, 112, 24), 14)
 		member_health_labels.append(label_at(self, "", Rect2(20 + index * 112, 683, 112, 22), 13))
-	label_at(self, "Flechas: mover    WASD: disparar ↑ ← ↓ →    E: habilidad\nShift: esquivar    1–4: cambiar personaje    R: reiniciar    N: escenario", Rect2(505, 641, 750, 56), 16)
+	label_at(self, "Flechas: mover    WASD: disparar ↑ ← ↓ →    E: habilidad\nShift: esquivar    1–4: cambiar    Q: Ad-lib    Esc: pausa    R/M: reiniciar", Rect2(505, 641, 750, 56), 16)
 	_create_defeat_panel()
+	_create_pause_panel()
+	_create_intro_panel()
+	process_mode = Node.PROCESS_MODE_ALWAYS
+	set_process(true)
+
+func _process(delta: float) -> void:
+	if intro_timer > 0.0:
+		intro_timer = maxf(0.0, intro_timer - delta)
+		if intro_timer <= 0.0 and is_instance_valid(intro_panel):
+			intro_panel.hide()
 
 # Refresca el HUD con el diccionario emitido por el jugador.
 func update_stats(data: Dictionary, defeated: int) -> void:
@@ -134,48 +163,157 @@ func update_chain(level: int, timer: float) -> void:
 	var names := ["SIN CADENA", "SOLO", "DUETO", "TRÍO", "CUARTETO"]
 	chain_text.text = "CADENA: %s   %.1f s" % [names[clampi(level, 0, 4)], maxf(timer, 0.0)]
 
-# Panel oculto que se muestra al perder: oscurece la pantalla, muestra el
-# cartel EQUIPO DERROTADO y el botón REINICIAR estilizado con la hoja de menú.
+# Panel de fin de run (derrota / victoria + resumen meta).
 func _create_defeat_panel() -> void:
 	defeat_panel = Control.new()
 	defeat_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	defeat_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(defeat_panel)
 	var shade := ColorRect.new()
-	shade.color = Color(0.01, 0.01, 0.03, 0.85)
+	shade.color = Color(0.01, 0.01, 0.03, 0.88)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	defeat_panel.add_child(shade)
-	picture(defeat_panel, atlas(MENU_SHEET, Rect2(431, 20, 324, 163)), Rect2(390, 214, 500, 252))
-	var title := label_at(defeat_panel, "EQUIPO DERROTADO", Rect2(440, 258, 400, 45), 30)
-	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	var hint := label_at(defeat_panel, "Pulsa R o reinicia para volver a jugar", Rect2(415, 310, 450, 32))
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	end_art = TextureRect.new()
+	end_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	end_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+	end_art.position = Vector2(340, 80)
+	end_art.size = Vector2(600, 220)
+	end_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	defeat_panel.add_child(end_art)
+	end_title = label_at(defeat_panel, "EQUIPO DERROTADO", Rect2(340, 310, 600, 40), 30)
+	end_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	end_body = label_at(defeat_panel, "", Rect2(360, 360, 560, 140), 15)
+	end_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	end_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	summary_art = TextureRect.new()
+	summary_art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	summary_art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	summary_art.texture = SUMMARY_ART
+	summary_art.position = Vector2(40, 80)
+	summary_art.size = Vector2(280, 160)
+	summary_art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	defeat_panel.add_child(summary_art)
+	var restart := _menu_button(defeat_panel, "REINICIAR (R)", Vector2(390, 520), func():
+		SESSION.clear()
+		get_tree().reload_current_scene())
+	var fresh := _menu_button(defeat_panel, "NUEVA RUN (M)", Vector2(670, 520), func():
+		SESSION.clear()
+		get_tree().set_meta("run_seed", randi() + 1)
+		get_tree().reload_current_scene())
+	restart.custom_minimum_size = Vector2(240, 48)
+	fresh.custom_minimum_size = Vector2(240, 48)
+	defeat_panel.hide()
+
+func _menu_button(parent: Node, caption: String, origin: Vector2, on_press: Callable) -> Button:
 	var button := Button.new()
-	button.position = Vector2(510, 365)
-	button.size = Vector2(260, 50)
-	button.text = "REINICIAR"
+	button.position = origin
+	button.size = Vector2(240, 48)
+	button.text = caption
+	button.add_theme_font_size_override("font_size", 16)
 	for state in ["normal", "hover", "pressed", "focus"]:
 		var style := StyleBoxTexture.new()
 		style.texture = atlas(MENU_SHEET, Rect2(20, 369, 243, 56))
 		button.add_theme_stylebox_override(state, style)
-	# Cover the sheet's sample text with the actual, localized button caption.
-	button.add_theme_font_size_override("font_size", 18)
-	var caption_bg := StyleBoxFlat.new()
-	caption_bg.bg_color = Color("10102c")
-	var caption := Panel.new()
-	caption.position = Vector2(46, 9)
-	caption.size = Vector2(168, 32)
-	caption.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	caption.add_theme_stylebox_override("panel", caption_bg)
-	button.add_child(caption)
-	var caption_text := label_at(caption, "REINICIAR", Rect2(0, 0, 168, 32), 18)
-	caption_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	caption_text.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	button.pressed.connect(func(): get_tree().reload_current_scene())
-	defeat_panel.add_child(button)
-	defeat_panel.hide()
+	button.pressed.connect(func():
+		SFX.play("ui")
+		on_press.call())
+	parent.add_child(button)
+	return button
 
-# Muestra la derrota y bloquea el cambio de integrante.
+func _create_pause_panel() -> void:
+	pause_panel = Control.new()
+	pause_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	add_child(pause_panel)
+	var shade := ColorRect.new()
+	shade.color = Color(0.02, 0.02, 0.05, 0.72)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	pause_panel.add_child(shade)
+	picture(pause_panel, PAUSE_ART, Rect2(390, 120, 500, 280))
+	var title := label_at(pause_panel, "PAUSA", Rect2(390, 420, 500, 36), 28)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var hint := label_at(pause_panel, "Esc para continuar · R reinicia · M nueva run", Rect2(390, 465, 500, 28), 14)
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_menu_button(pause_panel, "CONTINUAR", Vector2(520, 510), toggle_pause)
+	pause_panel.hide()
+
+func _create_intro_panel() -> void:
+	intro_panel = Control.new()
+	intro_panel.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	intro_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(intro_panel)
+	var shade := ColorRect.new()
+	shade.color = Color(0.01, 0.01, 0.04, 0.55)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	intro_panel.add_child(shade)
+	var art := TextureRect.new()
+	art.name = "IntroArt"
+	art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	art.position = Vector2(340, 140)
+	art.size = Vector2(600, 260)
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	intro_panel.add_child(art)
+	intro_title = label_at(intro_panel, "", Rect2(340, 420, 600, 36), 26)
+	intro_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro_body = label_at(intro_panel, "", Rect2(360, 460, 560, 40), 15)
+	intro_body.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	intro_panel.hide()
+
+# Compat: derrota simple.
 func show_defeat() -> void:
+	show_run_end(false, {})
+
+# Victoria o derrota con resumen de la run + meta.
+func show_run_end(won: bool, summary: Dictionary) -> void:
+	var meta: Dictionary = META.record_run(won, int(summary.get("floor", 1)), int(summary.get("rooms", 0)))
+	end_art.texture = VICTORY_ART if won else DEFEAT_ART
+	end_title.text = "VICTORIA · HARMONY CLEAR" if won else "EQUIPO DERROTADO"
+	end_body.text = "Piso %d · Salas %d · Jefes %d · Monedas %d · Ítems %d\nColección %d · Fragmentos +%d (total %d) · Mejor piso %d\nRuns %d (W %d / L %d)" % [
+		int(summary.get("floor", 1)),
+		int(summary.get("rooms", 0)),
+		int(summary.get("bosses", 0)),
+		int(summary.get("coins", 0)),
+		int(summary.get("items", 0)),
+		META.discovered_count(),
+		int(meta.get("last_fragments_gained", 0)),
+		int(meta.get("star_fragments", 0)),
+		int(meta.get("best_floor", 1)),
+		int(meta.get("runs_played", 0)),
+		int(meta.get("runs_won", 0)),
+		int(meta.get("runs_lost", 0)),
+	]
 	defeat_panel.show()
+	pause_panel.hide()
+	if paused_game:
+		get_tree().paused = false
+		paused_game = false
+	SFX.play("victory" if won else "defeat")
 	for button in member_buttons:
 		button.disabled = true
+
+func toggle_pause() -> void:
+	if defeat_panel.visible:
+		return
+	paused_game = not paused_game
+	pause_panel.visible = paused_game
+	get_tree().paused = paused_game
+	if paused_game:
+		SFX.play("pause")
+	else:
+		SFX.play("ui")
+
+func show_floor_intro(floor_number: int, biome_name: String) -> void:
+	_show_intro(FLOOR_INTRO_ART, "PISO %d" % floor_number, biome_name, 2.2)
+
+func show_boss_intro(boss_name: String) -> void:
+	_show_intro(BOSS_INTRO_ART, "JEFE", boss_name, 2.4)
+
+func _show_intro(art: Texture2D, title: String, body: String, duration: float) -> void:
+	var view: TextureRect = intro_panel.get_node("IntroArt")
+	view.texture = art
+	intro_title.text = title
+	intro_body.text = body
+	intro_panel.show()
+	intro_timer = duration
+	SFX.play("intro")
