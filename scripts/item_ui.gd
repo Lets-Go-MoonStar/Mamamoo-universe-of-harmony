@@ -188,6 +188,21 @@ func open_next() -> void:
 func roll_choices() -> void:
 	choices.clear()
 	var kind := current_kind
+	# Cofre celestial: exactamente hasta 3 reliquias LEGENDARY distintas
+	# (excluye el propio cofre). Ya no cae a épicas.
+	if kind == "legendary":
+		var legendary_pool: Array[String] = []
+		for entry in CATALOG.all():
+			var id: String = entry.id
+			if entry.rarity != "LEGENDARY": continue
+			if id == "legendary_celestial_chest": continue
+			if not system.can_acquire(id): continue
+			legendary_pool.append(id)
+		while not legendary_pool.is_empty() and choices.size() < 3:
+			var pick: int = system.rng.randi_range(0, legendary_pool.size() - 1)
+			choices.append(legendary_pool[pick])
+			legendary_pool.remove_at(pick)
+		return
 	# Los pesos de la sala determinan qué rarezas pueden caer (45/30/15/8/2,
 	# con variantes élite y jefe que mejoran la rareza, sección 13-14). Se
 	# elige primero la rareza por su peso y después un ítem uniforme de esa
@@ -202,6 +217,7 @@ func roll_choices() -> void:
 		if weights.get(entry.rarity, 0.0) <= 0.0: continue
 		if id in ["treasure_chest", "legendary_celestial_chest"] and kind in ["chest", "legendary"]: continue
 		if kind == "special" and entry.rarity not in ["RARE", "EPIC", "LEGENDARY"]: continue
+		if kind == "chest" and entry.rarity not in ["EPIC", "LEGENDARY"]: continue
 		if not by_rarity.has(entry.rarity):
 			by_rarity[entry.rarity] = []
 			rarities.append(entry.rarity)

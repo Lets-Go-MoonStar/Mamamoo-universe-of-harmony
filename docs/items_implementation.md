@@ -42,9 +42,15 @@ Hay salas élite cada tres salas y jefe cada cinco. Las élite garantizan una op
 - Bonus repetibles: máximo tres unidades en shard, moon token, flame emblem, speed feather, EXP orb y batería; cinco gemas de cooldown; una en reliquias salvo tres fragmentos. Los recursos y consumibles tienen límites propios en el catálogo.
 - Límites: reducción de CD 40%, velocidad de objetos +35%, generación de Armonía +60%. Los bonus de daño del mismo grupo se suman y se limitan; los efectos secundarios no se autoactivan recursivamente.
 
-## Excepción del cofre legendario
+## Cofre legendario
 
-La fuente pide tres reliquias legendarias para elegir, pero solo define **Quartet Crown** como reliquia legendaria (el otro objeto legendario es el propio cofre). Para no inventar estadísticas de dos reliquias nuevas, este cofre cura 20% a las vivas y ofrece una selección de reliquias épicas/legendarias disponibles. La descripción y la ventana lo indican. Falta definir al menos dos reliquias legendarias adicionales para que las tres opciones puedan ser siempre legendarias.
+La fuente pide tres reliquias legendarias. El prototipo define:
+
+- **Quartet Crown** — Encore al completar Cuarteto (GDD).
+- **Curtain Call Brooch** — Al activar Ad-lib recuperas 25 energía; durante Ad-lib cada cambio de integrante otorga +6 Armonía (refuerza el patrón de rotación en Ad-lib).
+- **Stage Guardian Veil** — La primera caída de cada integrante la deja con 15% Voz e invulnerabilidad 1.5 s (cambia el ritmo de rotación forzada).
+
+El cofre cura 20% a las vivas y `roll_choices()` con kind `legendary` ofrece hasta 3 de esas reliquias disponibles (nunca el propio cofre).
 
 ## Verificación
 

@@ -47,8 +47,9 @@ included; all visuals are provided assets of the project.
 
 **Servicios & economía**
 - Coins, XP/levels, keys, tickets, chests (cofre con llave y cofre celestial),
-  y 32 ítems (healing, shields, speed, cooldown, relics, duo/trio/quartet,
-  Ad-lib, Echo Orb, boss fragments, compass, talismans...).
+  y 34 ítems (healing, shields, speed, cooldown, relics, duo/trio/quartet,
+  Ad-lib, Echo Orb, boss fragments, compass, talismans, Curtain Call Brooch,
+  Stage Guardian Veil...).
 - **Inventario y catálogo** (I). Tienda en salas SHOP, curación y mejoras en
   las rutas, salas REWARD y eventos (EVENT).
 - Nueve **fondo**s (N o dropdown); el bioma del piso se aplica automáticamente.
@@ -99,6 +100,7 @@ $GODOT --headless --path . --fixed-fps 60 --script res://tests/hud_smoke.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/logic_audit.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/visual_integration.gd
 $GODOT --headless --path . --fixed-fps 60 --script res://tests/boundary_cases.gd
+$GODOT --headless --path . --fixed-fps 60 --script res://tests/celestial_chest_smoke.gd
 ```
 
 `floor_system.gd` cubre el sistema procedural: reproducibilidad por seed,
@@ -107,7 +109,7 @@ rutas y jefe con fases).
 
 ## Reference files
 
-- `data/items.json` — 32-item catalog (id, rarity, category, stack limit, icon cell).
+- `data/items.json` — 34-item catalog (id, rarity, category, stack limit, icon cell).
 - `docs/items_implementation.md` — design adaptations and prototype values.
 - `docs/item_stats_source.txt` — raw text extracted from the source GDD.
 - `REPORTE_TRABAJO_2026-09-20.md` — work report for 20 September 2026.
@@ -120,15 +122,14 @@ rutas y jefe con fases).
 ## Notes / adaptations
 
 The source GDD proposes a shared Voice meter; the prototype uses individual
-Voice per member (see `docs/items_implementation.md`). The celestial chest asks
-for three legendary relics, but the doc only defines `Quartet Crown`, so it
-currently offers a fallback pool of epic/legendary relics. Las salas de pisos
-4-13 usan `FloorConfig.make_default`, que referencia la pool completa y filtra
-por rango de piso de cada variante.
+Voice per member (see `docs/items_implementation.md`). The celestial chest
+offers three legendary relics: `Quartet Crown`, `Curtain Call Brooch` and
+`Stage Guardian Veil`. Las salas de pisos 4-13 usan `FloorConfig.make_default`,
+que referencia la pool completa y filtra por rango de piso de cada variante.
 
 ## Next milestones
 
-1. Two more legendary relics so the celestial chest always offers three.
+1. ~~Two more legendary relics so the celestial chest always offers three.~~
 2. ~~Maps/mapa visual del piso y reselección de ruta antes de entrar.~~ (hecho: `scripts/floor_map.gd` en el panel de rutas)
 3. Numbers definitivos de Composure / Ad-lib / reacciones elementales.
 4. Persistencia de sesión (inventario entre partidas).

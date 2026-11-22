@@ -25,7 +25,9 @@ func frames(count: int) -> void:
 
 func run() -> void:
 	var catalog := CATALOG.all()
-	check(catalog.size() == 32, "Catálogo tiene 32 ítems")
+	check(catalog.size() == 34, "Catálogo tiene 34 ítems")
+	check(CATALOG.entry("curtain_call_brooch").rarity == "LEGENDARY", "Curtain Call Brooch es legendaria")
+	check(CATALOG.entry("stage_guardian_veil").rarity == "LEGENDARY", "Stage Guardian Veil es legendaria")
 	var seen := {}
 	for entry in catalog:
 		check(not entry.id.is_empty() and not seen.has(entry.id), "Ítem único: %s" % entry.id)
@@ -37,6 +39,7 @@ func run() -> void:
 	var player: HarmonyPlayer = PLAYER.new()
 	root.add_child(player)
 	await frames(2)
+	player.set_physics_process(false)
 	var items = player.items
 	check(items != null, "HarmonyPlayer monta RunItems")
 
@@ -114,6 +117,43 @@ func run() -> void:
 	player.harmony = 100.0
 	items.start_adlib()
 	check(items.active("adlib"), "Ad-lib activa ventana de 5 s")
+
+	player.set_physics_process(false)
+	player.team_defeated = false
+
+	# Curtain Call Brooch: energía al abrir Ad-lib + Armonía al cambiar.
+	items.owned.clear()
+	items.owned["curtain_call_brooch"] = 1
+	items.energy = 40.0
+	player.harmony = 100.0
+	items.timers.erase("adlib")
+	items.start_adlib()
+	check(items.energy >= 65.0, "Curtain Call Brooch otorga 25 energía al activar Ad-lib")
+	var harmony_before: float = player.harmony
+	items.on_switch(0, 1)
+	check(player.harmony >= harmony_before + 6.0 - 0.01, "Curtain Call Brooch otorga +6 Armonía al cambiar durante Ad-lib")
+
+	# Stage Guardian Veil: salva la primera caída.
+	items.owned.clear()
+	items.owned["stage_guardian_veil"] = 1
+	for i in range(4):
+		items.guardian_saved[i] = false
+	player.member_voice = [100.0, 100.0, 100.0, 100.0]
+	player.active_index = 0
+	player.invulnerable = 0.0
+	player.receive_damage(999.0)
+	check(player.member_voice[0] > 0.0 and items.guardian_saved[0], "Stage Guardian Veil salva la primera caída")
+	player.invulnerable = 0.0
+	player.receive_damage(999.0)
+	check(player.member_voice[0] <= 0.0 or player.active_index != 0, "La segunda caída de la misma integrante no se vuelve a salvar")
+
+	# Cofre celestial: pool legendaria con al menos 3 reliquias (sin el cofre).
+	var legendary_pool: Array[String] = []
+	for entry in CATALOG.all():
+		if entry.rarity == "LEGENDARY" and entry.id != "legendary_celestial_chest":
+			legendary_pool.append(entry.id)
+	check(legendary_pool.size() >= 3, "Hay al menos 3 reliquias legendarias para el cofre celestial")
+	check(legendary_pool.has("quartet_crown") and legendary_pool.has("curtain_call_brooch") and legendary_pool.has("stage_guardian_veil"), "Pool incluye Crown, Brooch y Veil")
 
 	print("ITEMS SMOKE: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
