@@ -190,7 +190,10 @@ func _physics_process(delta: float) -> void:
 	if dying:
 		return
 	var direction := global_position.direction_to(target.global_position)
-	var speed_mult := (slow_factor if slow_timer > 0.0 else 1.0) * (1.3 if enraged else 1.0)
+	var room_spd := 1.0
+	if is_instance_valid(target) and "room_enemy_speed_mult" in target:
+		room_spd = float(target.room_enemy_speed_mult)
+	var speed_mult := (slow_factor if slow_timer > 0.0 else 1.0) * (1.3 if enraged else 1.0) * room_spd
 	dash_cd = maxf(0.0, dash_cd - delta)
 	snare_cd = maxf(0.0, snare_cd - delta)
 	pull_cd = maxf(0.0, pull_cd - delta)

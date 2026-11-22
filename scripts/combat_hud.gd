@@ -312,8 +312,9 @@ func toggle_pause() -> void:
 	else:
 		SFX.play("ui")
 
-func show_floor_intro(floor_number: int, biome_name: String) -> void:
-	_show_intro(FLOOR_INTRO_ART, "PISO %d" % floor_number, biome_name, 2.2)
+func show_floor_intro(floor_number: int, biome_name: String, path_line: String = "") -> void:
+	var body := biome_name if path_line.is_empty() else "%s\n%s" % [biome_name, path_line]
+	_show_intro(FLOOR_INTRO_ART, "PISO %d" % floor_number, body, 2.4)
 
 func show_boss_intro(boss_name: String) -> void:
 	_show_intro(BOSS_INTRO_ART, "JEFE", boss_name, 2.4)

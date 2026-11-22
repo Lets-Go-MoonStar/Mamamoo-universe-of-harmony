@@ -41,7 +41,8 @@ const BACKGROUNDS = [
 	preload("res://assets/backgrounds/shattered_void_background.png"),
 	preload("res://assets/backgrounds/eclipse_throne_background.png")
 ]
-const STAGE_NAMES = ["Arena del eclipse", "Palacio estelar", "Jardines del amanecer", "Ruinas lunares", "Cascadas de cristal", "Castillo de fuego", "Ciudad neón", "Vacío fragmentado", "Trono del eclipse"]
+const ROOM_MOD = preload("res://scripts/systems/room_modifier.gd")
+const IDENTITY = preload("res://scripts/systems/member_identity.gd")
 var stage_index := 0
 var stage_selector: OptionButton
 # Contenedor de todos los actores (jugador + enemigos); ordena por Y.
@@ -181,7 +182,7 @@ func _create_hud() -> void:
 	stage_selector = OptionButton.new()
 	stage_selector.position = Vector2(910, 112)
 	stage_selector.size = Vector2(344, 36)
-	for stage_name in STAGE_NAMES:
+	for stage_name in IDENTITY.STAGE_TITLES:
 		stage_selector.add_item(stage_name)
 	stage_selector.select(stage_index)
 	stage_selector.tooltip_text = "Selecciona escenario · N: siguiente"
@@ -218,12 +219,17 @@ func _begin_current_room() -> void:
 	room_budget = 1
 	player.global_position = arena_rect.get_center()
 	player.invulnerable = 1.5
+	ROOM_MOD.clear(player)
 	select_stage(_biome_for(room))
 	awaiting_reward = false
 	awaiting_floor_start = false
 	if room.room_type == "START" and _intro_floor_shown != run.current_floor:
 		_intro_floor_shown = run.current_floor
-		combat_hud.show_floor_intro(run.current_floor, STAGE_NAMES[_biome_for(room) % STAGE_NAMES.size()])
+		var stage := IDENTITY.stage_title(_biome_for(room), player.meta_path)
+		combat_hud.show_floor_intro(run.current_floor, stage, IDENTITY.path_tagline(player.meta_path))
+		if not player.meta_path.is_empty():
+			SFX.play(IDENTITY.sfx_for_path(player.meta_path))
+			VISUALS.screen_pulse(self, IDENTITY.pulse_color(player.meta_path), 0.45)
 	match room.room_type:
 		"BOSS":
 			_spawn_boss()
@@ -235,6 +241,7 @@ func _begin_current_room() -> void:
 			room_budget = maxi(1, total)
 			_spawn_wave(run.battle_waves[0])
 			if room.room_type != "START":
+				_apply_room_modifier(room)
 				_spawn_room_hazards(room)
 		"EVENT":
 			_enter_event_room()
@@ -293,14 +300,33 @@ func _spawn_room_hazards(room: RoomData) -> void:
 	# Combate late: a veces un patrón suave en vez de zonas sueltas.
 	if room.room_type == "COMBAT" and run.current_floor >= 8 and rng.randf() < 0.35:
 		_spawn_hazard_pattern("lanes", 2, rad * 0.9, dmg, "normal")
+		_spawn_extra_hazards_from_mod(rad, dmg)
 		return
 	var count := 1 if room.room_type == "COMBAT" else 2
+	count += player.room_extra_hazards
 	for i in range(count):
 		var at := Vector2(
 			rng.randf_range(arena_rect.position.x + 80.0, arena_rect.end.x - 80.0),
 			rng.randf_range(arena_rect.position.y + 40.0, arena_rect.end.y - 40.0)
 		)
 		_spawn_hazard_at(at, rad, dmg, "normal")
+
+func _spawn_extra_hazards_from_mod(rad: float, dmg: float) -> void:
+	for i in range(player.room_extra_hazards):
+		var at := Vector2(
+			rng.randf_range(arena_rect.position.x + 80.0, arena_rect.end.x - 80.0),
+			rng.randf_range(arena_rect.position.y + 40.0, arena_rect.end.y - 40.0)
+		)
+		_spawn_hazard_at(at, rad, dmg, "normal")
+
+func _apply_room_modifier(room: RoomData) -> void:
+	var mod_id := ROOM_MOD.pick(rng, run.current_floor, room.room_type)
+	var def: Dictionary = ROOM_MOD.apply(player, mod_id)
+	if def.is_empty():
+		return
+	SFX.play("setpiece")
+	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -110), str(def.get("label", "MOD")), IDENTITY.path_color(player.meta_path))
+	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -85), str(def.get("desc", "")), Color("ffffff", 0.85))
 
 func _elite_pattern_for_room() -> String:
 	# Preferencias por habilidades del pool élite si hay marshal/diva/rift en sala.
@@ -465,14 +491,14 @@ func _refresh_path_bonuses() -> void:
 		"solar":
 			player.ability_damage_mult = 1.18 * empower
 		"moonbyul":
-			player.dodge_cd_mult = 0.80 / empower
-			player.speed_path_mult = 1.10 * empower
+			player.dodge_cd_mult = 0.78 / empower
+			player.speed_path_mult = 1.12 * empower
 		"wheein":
 			player.harmony_path_mult = 1.25 * empower
 			player.chain_window = 2.6 + CombatConstants.WHEEIN_CHAIN_BONUS
 		"hwasa":
-			player.kill_composure_mult = 1.60 * empower
-			player.adlib_damage_mult = 1.12 * empower
+			player.kill_composure_mult = 1.45 * empower
+			player.adlib_damage_mult = 1.10 * empower
 
 # Completa el jefe: abre la recompensa especial del jefe; la confirmación del
 # piso (avanzar) ocurre al pulsar continuar en la transición.
@@ -759,7 +785,12 @@ func _draw() -> void:
 	draw_texture_rect(VISUALS.region(masonry, Rect2(575, 983, 165, 137)), Rect2(572, 285, 136, 113), false)
 	draw_rect(Rect2(0, 0, 1280, 110), Color(0.015, 0.015, 0.04, 0.80))
 	draw_rect(Rect2(0, 620, 1280, 100), Color(0.015, 0.015, 0.04, 0.84))
-	draw_rect(arena_rect, Color(0.8, 0.75, 1.0, 0.22), false, 1.0)
+	var border := IDENTITY.path_color(player.meta_path) if is_instance_valid(player) else Color(0.8, 0.75, 1.0)
+	border.a = 0.45
+	draw_rect(arena_rect, border, false, 2.0)
+	if is_instance_valid(player) and not player.room_mod_id.is_empty():
+		var mod_col := Color("ffd166", 0.18)
+		draw_rect(arena_rect.grow(-6.0), mod_col, false, 1.5)
 
 # Tipo de la siguiente sala posible (legado, para la brújula).
 func next_room_kind() -> String:

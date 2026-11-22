@@ -26,19 +26,19 @@ const PATH_DEFS := {
 	"moonbyul": {
 		"cost": 45,
 		"label": "Ruta Moonbyul",
-		"desc": "Esquiva −20% CD · vel +10% · tras esquivar, disparo +18%.",
+		"desc": "Esquiva −22% CD · vel +12% · tras esquivar, disparo +22%.",
 		"member": 1,
 	},
 	"wheein": {
 		"cost": 45,
 		"label": "Ruta Wheein",
-		"desc": "Armonía +25% · switch cura 4 · cadena dura +0.6s.",
+		"desc": "Armonía +25% · switch cura 4 · cadena dura +0.5s.",
 		"member": 2,
 	},
 	"hwasa": {
 		"cost": 45,
 		"label": "Ruta Hwasa",
-		"desc": "Kill Compostura +60% · Ad-lib +12% · a Compostura alta +daño.",
+		"desc": "Kill Compostura +45% · Ad-lib +10% · a Compostura alta +daño.",
 		"member": 3,
 	},
 }
