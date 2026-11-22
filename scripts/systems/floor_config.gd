@@ -48,14 +48,15 @@ static func make_default(floor_number: int) -> FloorConfig:
 			cfg.reward_chance = 0.16
 			cfg.route_branch_chance = 0.58
 		_:
-			cfg.min_rooms = 20
-			cfg.max_rooms = 25
+			# Tramo largo más corto y con más EVENT/REWARD para romper monotonía.
+			cfg.min_rooms = 14 + (floor_number - 8)
+			cfg.max_rooms = 18 + (floor_number - 8)
 			cfg.enemy_budget = 10 + (floor_number - 8)
-			cfg.elite_chance = 0.28 + (floor_number - 8) * 0.01
-			cfg.event_chance = 0.14
-			cfg.shop_chance = 0.15
-			cfg.reward_chance = 0.14
-			cfg.route_branch_chance = 0.62
+			cfg.elite_chance = 0.30 + (floor_number - 8) * 0.015
+			cfg.event_chance = 0.20
+			cfg.shop_chance = 0.16
+			cfg.reward_chance = 0.18
+			cfg.route_branch_chance = 0.64
 	cfg.difficulty_multiplier = 1.0 + (floor_number - 1) * 0.08
 	cfg.damage_multiplier = 1.0 + (floor_number - 1) * 0.055
 	cfg.biome_index = (floor_number - 1) % 9
@@ -83,6 +84,9 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 	var extra: Array[String] = [
 		"res://resources/enemy_pool/resonance_drone.tres",
 		"res://resources/enemy_pool/pulse_swarm.tres",
+		"res://resources/enemy_pool/hex_echo.tres",
+		"res://resources/enemy_pool/mirror_siren.tres",
+		"res://resources/enemy_pool/beat_crusher.tres",
 	]
 	var pool: Array[String] = early.duplicate()
 	if floor_number >= 2:
@@ -91,10 +95,15 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 		pool.append_array(mid.slice(2, 4))
 	if floor_number >= 4:
 		pool.append_array(late)
+		pool.append(extra[2])
 	if floor_number >= 5:
 		pool.append(extra[0])
 	if floor_number >= 6:
 		pool.append(extra[1])
+	if floor_number >= 7:
+		pool.append(extra[3])
+	if floor_number >= 8:
+		pool.append(extra[4])
 	return pool
 
 static func boss_pool_for(floor_number: int) -> Array[String]:
@@ -103,10 +112,19 @@ static func boss_pool_for(floor_number: int) -> Array[String]:
 		bosses.append("res://resources/boss_pool/overlord.tres")
 	if floor_number >= 2 and floor_number <= 4:
 		bosses.append("res://resources/boss_pool/critic.tres")
-	if floor_number >= 3:
+	if floor_number >= 3 and floor_number <= 4:
 		bosses.append("res://resources/boss_pool/eclipse.tres")
-	if floor_number >= 8:
+	if floor_number >= 5 and floor_number <= 7:
+		bosses.append("res://resources/boss_pool/crystal_warden.tres")
+		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if floor_number >= 8 and floor_number <= 10:
 		bosses.append("res://resources/boss_pool/void_conductor.tres")
+		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if floor_number >= 11:
+		# Pico final: Void Conductor dominante.
+		bosses.append("res://resources/boss_pool/void_conductor.tres")
+		bosses.append("res://resources/boss_pool/void_conductor.tres")
+		bosses.append("res://resources/boss_pool/eclipse.tres")
 	if bosses.is_empty():
 		bosses.append("res://resources/boss_pool/eclipse.tres")
 	return bosses

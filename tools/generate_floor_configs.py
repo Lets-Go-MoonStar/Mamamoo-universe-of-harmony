@@ -25,6 +25,9 @@ LATE = [
 EXTRA = [
 	"res://resources/enemy_pool/resonance_drone.tres",
 	"res://resources/enemy_pool/pulse_swarm.tres",
+	"res://resources/enemy_pool/hex_echo.tres",
+	"res://resources/enemy_pool/mirror_siren.tres",
+	"res://resources/enemy_pool/beat_crusher.tres",
 ]
 
 
@@ -36,10 +39,15 @@ def enemy_pool(n: int) -> list[str]:
 		pool += MID[2:]
 	if n >= 4:
 		pool += LATE
+		pool.append(EXTRA[2])
 	if n >= 5:
 		pool.append(EXTRA[0])
 	if n >= 6:
 		pool.append(EXTRA[1])
+	if n >= 7:
+		pool.append(EXTRA[3])
+	if n >= 8:
+		pool.append(EXTRA[4])
 	return pool
 
 
@@ -49,10 +57,18 @@ def boss_pool(n: int) -> list[str]:
 		bosses.append("res://resources/boss_pool/overlord.tres")
 	if 2 <= n <= 4:
 		bosses.append("res://resources/boss_pool/critic.tres")
-	if n >= 3:
+	if 3 <= n <= 4:
 		bosses.append("res://resources/boss_pool/eclipse.tres")
-	if n >= 8:
+	if 5 <= n <= 7:
+		bosses.append("res://resources/boss_pool/crystal_warden.tres")
+		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if 8 <= n <= 10:
 		bosses.append("res://resources/boss_pool/void_conductor.tres")
+		bosses.append("res://resources/boss_pool/eclipse.tres")
+	if n >= 11:
+		bosses.append("res://resources/boss_pool/void_conductor.tres")
+		bosses.append("res://resources/boss_pool/void_conductor.tres")
+		bosses.append("res://resources/boss_pool/eclipse.tres")
 	return bosses or ["res://resources/boss_pool/eclipse.tres"]
 
 
@@ -80,14 +96,14 @@ def bands(n: int) -> dict:
 			route_branch_chance=0.58,
 		)
 	return dict(
-		min_rooms=20,
-		max_rooms=25,
+		min_rooms=14 + (n - 8),
+		max_rooms=18 + (n - 8),
 		enemy_budget=10 + (n - 8),
-		elite_chance=round(0.28 + (n - 8) * 0.01, 3),
-		event_chance=0.14,
-		shop_chance=0.15,
-		reward_chance=0.14,
-		route_branch_chance=0.62,
+		elite_chance=round(0.30 + (n - 8) * 0.015, 3),
+		event_chance=0.20,
+		shop_chance=0.16,
+		reward_chance=0.18,
+		route_branch_chance=0.64,
 	)
 
 

@@ -22,6 +22,8 @@ var owned: Dictionary = {}
 var coins := 0
 var keys := 0
 var tickets := 0
+# Descuento permanente de tienda (meta upgrades).
+var shop_discount := 0
 var xp := 0.0
 var level := 1
 var energy := 100.0

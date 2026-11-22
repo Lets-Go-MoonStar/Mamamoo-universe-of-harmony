@@ -57,6 +57,10 @@ var label := "ECHO"
 var current_phase := 0
 # CD de disparo para arquetipos ranged y reinicio de la fase del jefe en 0.
 var fired_cd := 0.0
+# Dash firmado (Hex Echo / Beat Crusher): embestida corta hacia el jugador.
+var dash_cd := 0.0
+var dash_time := 0.0
+var dash_dir := Vector2.ZERO
 
 # Configura la variante clásica del prototipo (compatibilidad con tests).
 func setup(new_target: Node2D, variant: int = 0) -> void:
@@ -109,6 +113,7 @@ func setup_data(new_target: Node2D, enemy_data: EnemyData, hp_mult := 1.0, dmg_m
 	if enemy_data.is_elite:
 		max_hp *= 1.8
 		hp = max_hp
+		enemy_color = enemy_color.lightened(0.15)
 
 # Configura un jefe con fases, abilities y proyectiles propios (BossData).
 func setup_boss(new_target: Node2D, boss: BossData) -> void:
@@ -179,6 +184,19 @@ func _physics_process(delta: float) -> void:
 		return
 	var direction := global_position.direction_to(target.global_position)
 	var speed_mult := (slow_factor if slow_timer > 0.0 else 1.0) * (1.3 if enraged else 1.0)
+	dash_cd = maxf(0.0, dash_cd - delta)
+	if dash_time > 0.0:
+		dash_time = maxf(0.0, dash_time - delta)
+		velocity = dash_dir * move_speed * 3.2 * speed_mult
+		_melee_contact()
+		move_and_slide()
+		art.locomotion(true, dash_dir.x)
+		return
+	if _has_ability("dash") and dash_cd <= 0.0 and global_position.distance_to(target.global_position) > 90.0:
+		dash_dir = direction
+		dash_time = 0.22
+		dash_cd = 2.8 if data != null and data.is_elite else 3.4
+		VISUALS.burst(self, VISUALS.COMBAT, 1, 4, 70.0, Vector2(0, -10), 0.25)
 	if ranged:
 		_ranged_behavior(delta, direction, speed_mult)
 	else:
@@ -235,6 +253,9 @@ func take_damage(amount: float, _member_index: int = -1) -> void:
 	hp -= amount
 	hit_flash = 0.10
 	queue_redraw()
+	if is_inside_tree() and amount >= 1.0:
+		var tint := Color("ffd166") if is_boss or (data != null and data.is_elite) else Color("f8f8ff")
+		VISUALS.float_text(get_parent(), global_position + Vector2(0, -40), "-%d" % int(round(amount)), tint)
 	_maybe_enrage()
 	if hp <= 0.0:
 		dying = true
@@ -325,3 +346,7 @@ func _draw() -> void:
 	draw_rect(Rect2(-bar_width * 0.5, -85 if is_large else -66, bar_width * hp_ratio, 5), Color("f1fa8c"))
 	if enraged:
 		draw_arc(Vector2.ZERO, 25.0, 0.0, TAU, 24, Color("ff5964"), 2.0)
+	if data != null and data.is_elite:
+		draw_arc(Vector2.ZERO, 27.0, 0.0, TAU, 28, Color("ffd166", 0.85), 2.5)
+	if _has_ability("dash") and dash_cd <= 0.4:
+		draw_arc(Vector2.ZERO, 20.0, 0.0, TAU, 16, Color("4cc9f0", 0.7), 1.5)

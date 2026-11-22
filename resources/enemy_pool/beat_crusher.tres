@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "beat_crusher"
+display_name = "Beat Crusher"
+archetype = "tank"
+max_hp = 220.0
+damage = 18.0
+speed = 55.0
+attack_range = 42.0
+attack_cooldown = 1.05
+difficulty_cost = 5
+abilities = Array[String](["enrage", "dash"])
+sprite_index = 4
+min_floor = 8
+max_floor = 13
+is_elite = true

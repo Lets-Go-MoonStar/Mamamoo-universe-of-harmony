@@ -52,6 +52,10 @@ var voice: float:
 var harmony := 0.0
 # Compostura: medidor que alimenta Ad-lib (Q). Independiente de Armonía/cadena.
 var composure := 0.0
+# Multiplicador meta permanente sobre ganancias de Compostura.
+var composure_gain_mult := 1.0
+# Flash rojo breve al recibir daño (lectura de peligro).
+var hurt_flash := 0.0
 # Cooldowns: ataque, habilidad y esquiva; invulnerable = segundos sin recibir daño.
 var attack_cd := 0.0
 var ability_cd := 0.0
@@ -99,6 +103,7 @@ func _physics_process(delta: float) -> void:
 	ability_cd = max(ability_cd - delta, 0.0)
 	dodge_cd = max(dodge_cd - delta, 0.0)
 	invulnerable = max(invulnerable - delta, 0.0)
+	hurt_flash = maxf(0.0, hurt_flash - delta)
 	_update_chain(delta)
 	_update_shooting_direction()
 	_handle_switch_inputs()
@@ -287,7 +292,7 @@ func _on_projectile_hit(member_index: int, _damage: float) -> void:
 	_emit_stats()
 
 func gain_composure(amount: float) -> void:
-	composure = minf(CombatConstants.COMPOSURE_MAX, composure + amount)
+	composure = minf(CombatConstants.COMPOSURE_MAX, composure + amount * composure_gain_mult)
 
 # Actualiza la cadena de Armonía: golpes de integrantes distintas suman nivel;
 # al llegar a Cuarteto otorga Armonía extra y activa efectos de cuarteto.
@@ -323,9 +328,14 @@ func _update_chain(delta: float) -> void:
 func receive_damage(amount: float, corruption: bool = false, boss: bool = false) -> void:
 	if team_defeated or invulnerable > 0.0 or voice <= 0.0:
 		return
-	voice = maxf(0.0, voice - items.absorb(amount, corruption, boss))
+	var taken: float = items.absorb(amount, corruption, boss)
+	voice = maxf(0.0, voice - taken)
 	items.after_damage()
 	art.action("hurt", 0.18)
+	hurt_flash = 0.22
+	if is_inside_tree() and taken > 0.0:
+		VISUALS.float_text(get_parent(), global_position + Vector2(0, -48), "-%d" % int(round(taken)), Color("ff5d5d") if boss or corruption else Color("ff8fa3"))
+		VISUALS.burst(self, VISUALS.STATUS, 2, 6, 55.0, Vector2(0, -12), 0.28)
 	invulnerable = 0.45
 	chain_timer = 0.0
 	chain_members.clear()
@@ -398,6 +408,8 @@ func _draw() -> void:
 	draw_line(aim_dir * 25.0, aim_dir * 34.0, Color.WHITE, 2.0)
 	if invulnerable > 0.0:
 		draw_arc(Vector2.ZERO, 28.0, 0.0, TAU, 32, Color.WHITE, 2.0)
+	if hurt_flash > 0.0:
+		draw_arc(Vector2.ZERO, 30.0, 0.0, TAU, 28, Color(1.0, 0.2, 0.25, 0.55 + hurt_flash), 3.0)
 
 # Sombra elíptica bajo el personaje (levemente achatada para dar profundidad).
 func draw_ellipse_shadow() -> void:

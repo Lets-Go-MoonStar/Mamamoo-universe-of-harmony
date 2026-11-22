@@ -1,0 +1,19 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hex_echo"
+display_name = "Hex Echo"
+archetype = "chaser"
+max_hp = 70.0
+damage = 10.0
+speed = 112.0
+attack_range = 38.0
+attack_cooldown = 0.75
+difficulty_cost = 2
+abilities = Array[String](["debuff", "dash"])
+sprite_index = 0
+min_floor = 4
+max_floor = 10

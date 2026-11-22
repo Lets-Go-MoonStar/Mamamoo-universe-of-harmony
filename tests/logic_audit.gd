@@ -2,6 +2,9 @@ extends SceneTree
 # Auditoría de flujos corregidos (P1–P5 / navegación / escalado).
 # godot --headless --path . --fixed-fps 60 --script res://tests/logic_audit.gd
 
+const SESSION = preload("res://scripts/systems/session_store.gd")
+const META = preload("res://scripts/systems/meta_progress.gd")
+
 var failures := 0
 var checks := 0
 
@@ -20,12 +23,18 @@ func frames(count: int) -> void:
 	await process_frame
 
 func run() -> void:
+	SESSION.path_override = "user://mamamoo_session_logic_test.json"
+	SESSION.clear()
+	META.path_override = "user://mamamoo_meta_logic_test.json"
 	await _check_route_panel_closes()
 	_check_elite_weights()
 	_check_zero_budget()
 	_check_floor_scaling()
 	await _check_boss_room_solo_and_clear()
 	await _check_floor_13_ends_clean()
+	SESSION.clear()
+	SESSION.path_override = ""
+	META.path_override = ""
 	print("LOGIC AUDIT: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)
 

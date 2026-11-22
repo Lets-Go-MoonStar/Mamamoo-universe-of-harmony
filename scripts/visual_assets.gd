@@ -45,6 +45,26 @@ static func sprite(parent: Node, texture: Texture2D, width: float, offset := Vec
 	parent.add_child(node)
 	return node
 
+# Número/aviso flotante (daño, botín, peligro).
+static func float_text(parent: Node, world_pos: Vector2, text: String, color: Color = Color.WHITE, rise := 42.0) -> void:
+	if parent == null or not parent.is_inside_tree():
+		return
+	var label := Label.new()
+	label.text = text
+	label.modulate = color
+	label.z_index = 8
+	label.add_theme_font_size_override("font_size", 16)
+	label.add_theme_color_override("font_shadow_color", Color.BLACK)
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	parent.add_child(label)
+	label.global_position = world_pos + Vector2(-18, -28)
+	var tween := label.create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(label, "global_position:y", label.global_position.y - rise, 0.55)
+	tween.tween_property(label, "modulate:a", 0.0, 0.55)
+	tween.chain().tween_callback(label.queue_free)
+
 static func burst(parent: Node, sheet: Texture2D, row: int, rows: int, width: float, offset := Vector2.ZERO, duration := 0.45, regions: Array[Rect2] = []) -> AnimatedSprite2D:
 	var node := AnimatedSprite2D.new()
 	var frames := SpriteFrames.new()
