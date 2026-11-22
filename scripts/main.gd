@@ -274,8 +274,7 @@ func _spawn_wave(wave: Array) -> void:
 		actors.add_child(enemy)
 		spawned += 1
 
-# Puzzle de sala: zonas con telegraph en combate/élite a partir del piso 4.
-# Élite usa patrón fijo (cruz); combate/boss colocación aleatoria o anillo.
+# Puzzle de sala: patrones rotan por piso/seed para no quemar un solo set piece.
 func _spawn_room_hazards(room: RoomData) -> void:
 	if room == null or room.room_type not in ["COMBAT", "ELITE", "BOSS"]:
 		return
@@ -284,8 +283,16 @@ func _spawn_room_hazards(room: RoomData) -> void:
 	var rad := 60.0 + run.current_floor * 1.5
 	var dmg := 7.0 + run.current_floor * 0.4
 	if room.room_type == "ELITE":
-		_spawn_hazard_pattern("cross", 4, rad, dmg + 2.0)
-		VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -80), "SET PIECE", Color("ffd166"))
+		var elite_pat := _elite_pattern_for_room()
+		var count := 4 if elite_pat in ["cross", "corners", "diagonal"] else 3
+		_spawn_hazard_pattern(elite_pat, count, rad, dmg + CombatConstants.ELITE_HAZARD_DMG_BONUS, "elite")
+		SFX.play("setpiece")
+		VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -80), "SET PIECE · %s" % elite_pat.to_upper(), Color("ffd166"))
+		VISUALS.nudge(self as Node2D, 4.0, 0.16)
+		return
+	# Combate late: a veces un patrón suave en vez de zonas sueltas.
+	if room.room_type == "COMBAT" and run.current_floor >= 8 and rng.randf() < 0.35:
+		_spawn_hazard_pattern("lanes", 2, rad * 0.9, dmg, "normal")
 		return
 	var count := 1 if room.room_type == "COMBAT" else 2
 	for i in range(count):
@@ -293,15 +300,30 @@ func _spawn_room_hazards(room: RoomData) -> void:
 			rng.randf_range(arena_rect.position.x + 80.0, arena_rect.end.x - 80.0),
 			rng.randf_range(arena_rect.position.y + 40.0, arena_rect.end.y - 40.0)
 		)
-		_spawn_hazard_at(at, rad, dmg)
+		_spawn_hazard_at(at, rad, dmg, "normal")
 
-func _spawn_hazard_at(at: Vector2, rad: float, dmg: float) -> void:
+func _elite_pattern_for_room() -> String:
+	# Preferencias por habilidades del pool élite si hay marshal/diva/rift en sala.
+	for node in get_tree().get_nodes_in_group("enemies"):
+		if node is HarmonyEnemy and node.data != null:
+			if node._has_ability("lanes"):
+				return "lanes"
+			if node._has_ability("corners"):
+				return "corners"
+			if node._has_ability("setpiece"):
+				return "cross"
+	var patterns: Array[String] = ["cross", "diagonal", "corners", "lanes", "ring"]
+	var idx := int(abs(run.run_seed) + run.current_floor * 3 + run.rooms_completed) % patterns.size()
+	return patterns[idx]
+
+func _spawn_hazard_at(at: Vector2, rad: float, dmg: float, style := "normal") -> void:
 	var hazard = ARENA_HAZARD.new()
 	actors.add_child(hazard)
-	hazard.setup(player, at, rad, dmg)
-	VISUALS.float_text(self, at, "ZONA", Color("4cc9f0"))
+	hazard.setup(player, at, rad, dmg, style)
+	if style == "normal":
+		VISUALS.float_text(self, at, "ZONA", Color("4cc9f0"))
 
-func _spawn_hazard_pattern(kind: String, count: int, rad: float, dmg: float) -> void:
+func _spawn_hazard_pattern(kind: String, count: int, rad: float, dmg: float, style := "normal") -> void:
 	var center := arena_rect.get_center()
 	var span := mini(arena_rect.size.x, arena_rect.size.y) * 0.28
 	for i in range(count):
@@ -316,9 +338,28 @@ func _spawn_hazard_pattern(kind: String, count: int, rad: float, dmg: float) -> 
 			"ring":
 				var ang := TAU * float(i) / float(maxi(count, 1)) - PI * 0.5
 				at = center + Vector2(cos(ang), sin(ang)) * span
+			"diagonal":
+				match i % 4:
+					0: at = center + Vector2(-span, -span) * 0.75
+					1: at = center + Vector2(span, -span) * 0.75
+					2: at = center + Vector2(span, span) * 0.75
+					_: at = center + Vector2(-span, span) * 0.75
+			"corners":
+				var hx := arena_rect.size.x * 0.32
+				var hy := arena_rect.size.y * 0.30
+				match i % 4:
+					0: at = center + Vector2(-hx, -hy)
+					1: at = center + Vector2(hx, -hy)
+					2: at = center + Vector2(hx, hy)
+					_: at = center + Vector2(-hx, hy)
+			"lanes":
+				var lane_y := arena_rect.size.y * 0.22
+				at = center + Vector2((-0.5 + float(i % 2)) * arena_rect.size.x * 0.35, (-0.5 + float(i / 2)) * lane_y * 2.0)
+				if count <= 2:
+					at = center + Vector2(0, (-0.5 + float(i)) * lane_y * 2.2)
 			_:
 				at = center
-		_spawn_hazard_at(at, rad, dmg)
+		_spawn_hazard_at(at, rad, dmg, style)
 
 # Genera el jefe del piso (usado en salas BOSS) con sus refuerzos.
 func _spawn_boss() -> void:
@@ -337,12 +378,14 @@ func _spawn_boss() -> void:
 	spawned += 1
 	_spawn_room_hazards(run.current_room())
 
-# Set piece de jefe: al cambiar de fase con phase_storm, anillo de zonas.
+# Set piece de jefe: phase_storm rota patrón por fase (anillo → diagonal → lanes).
 func _on_boss_phase_changed(phase: int) -> void:
 	if phase < 2:
 		return
-	SFX.play("warn")
+	SFX.play("phase")
 	VISUALS.float_text(self, arena_rect.get_center() + Vector2(0, -100), "¡FASE %d!" % phase, Color("ff5964"))
+	VISUALS.screen_pulse(self, Color("c77dff", 0.32), 0.4)
+	VISUALS.nudge(self as Node2D, 8.0, 0.22)
 	var has_storm := false
 	for node in get_tree().get_nodes_in_group("enemies"):
 		if node is HarmonyEnemy and node.is_boss and node._has_ability("phase_storm"):
@@ -351,8 +394,14 @@ func _on_boss_phase_changed(phase: int) -> void:
 	if not has_storm:
 		return
 	var rad := 70.0 + run.current_floor * 1.2
-	var dmg := 9.0 + run.current_floor * 0.5
-	_spawn_hazard_pattern("ring", 3, rad, dmg)
+	var dmg := 9.0 + run.current_floor * 0.5 + CombatConstants.BOSS_STORM_DMG_BONUS
+	var storm_pat := "ring"
+	match phase:
+		2: storm_pat = "ring"
+		3: storm_pat = "diagonal"
+		_: storm_pat = "lanes"
+	var count := 3 if storm_pat == "ring" else 4
+	_spawn_hazard_pattern(storm_pat, count, rad, dmg, "storm")
 
 # Cada eliminación: contabiliza, aplica efectos del inventario, dispara la
 # siguiente oleada si procede, o completa la sala cuando ya no hay enemigos.
@@ -411,7 +460,7 @@ func _refresh_path_bonuses() -> void:
 	player.kill_composure_mult = 1.0
 	player.adlib_damage_mult = 1.0
 	player.chain_window = 2.6
-	var empower := 1.0 + 0.08 * float(player.path_empower)
+	var empower := 1.0 + CombatConstants.PATH_EMPOWER_STEP * float(player.path_empower)
 	match player.meta_path:
 		"solar":
 			player.ability_damage_mult = 1.18 * empower
@@ -420,7 +469,7 @@ func _refresh_path_bonuses() -> void:
 			player.speed_path_mult = 1.10 * empower
 		"wheein":
 			player.harmony_path_mult = 1.25 * empower
-			player.chain_window = 2.6 + 0.6
+			player.chain_window = 2.6 + CombatConstants.WHEEIN_CHAIN_BONUS
 		"hwasa":
 			player.kill_composure_mult = 1.60 * empower
 			player.adlib_damage_mult = 1.12 * empower
@@ -546,8 +595,11 @@ func _apply_event_effect(effect_id: String) -> void:
 		"path_empower":
 			if player.meta_path.is_empty():
 				player.gain_composure(30.0)
+			elif player.path_empower >= CombatConstants.PATH_EMPOWER_MAX:
+				player.gain_composure(25.0)
+				VISUALS.float_text(self, player.global_position + Vector2(0, -70), "RUTA MÁX", Color("4cc9f0"))
 			else:
-				player.path_empower = mini(2, player.path_empower + 1)
+				player.path_empower = mini(CombatConstants.PATH_EMPOWER_MAX, player.path_empower + 1)
 				_refresh_path_bonuses()
 				VISUALS.float_text(self, player.global_position + Vector2(0, -70), "RUTA↑", Color("ffd166"))
 		"path_cross_rehearsal":

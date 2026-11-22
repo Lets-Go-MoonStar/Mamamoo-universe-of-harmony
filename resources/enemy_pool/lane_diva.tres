@@ -1,0 +1,20 @@
+[gd_resource type="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/systems/enemy_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lane_diva"
+display_name = "Lane Diva"
+archetype = "ranged"
+max_hp = 95.0
+damage = 11.0
+speed = 78.0
+attack_range = 230.0
+attack_cooldown = 1.25
+difficulty_cost = 4
+abilities = Array[String](["telegraph", "snare", "lanes"])
+sprite_index = 1
+min_floor = 7
+max_floor = 13
+is_elite = true

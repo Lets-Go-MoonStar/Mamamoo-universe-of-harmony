@@ -45,5 +45,23 @@ func run() -> void:
 	check(META.PATH_DEFS["solar"]["desc"].find("Compostura") >= 0, "Solar describe sinergia")
 	check(META.PATH_DEFS["moonbyul"]["desc"].find("esquivar") >= 0, "Moonbyul describe post-esquiva")
 
+	check(ResourceLoader.exists("res://resources/enemy_pool/lane_diva.tres"), "Existe Lane Diva")
+	check(ResourceLoader.exists("res://resources/enemy_pool/rift_caller.tres"), "Existe Rift Caller")
+	var diva: EnemyData = load("res://resources/enemy_pool/lane_diva.tres")
+	check(diva.abilities.has("lanes"), "Lane Diva ability lanes")
+	var rift: EnemyData = load("res://resources/enemy_pool/rift_caller.tres")
+	check(rift.abilities.has("corners"), "Rift Caller ability corners")
+	var cfg7: FloorConfig = load("res://resources/floor_configs/floor_7.tres")
+	check(cfg7.enemy_pool.has("res://resources/enemy_pool/lane_diva.tres"), "Piso 7 incluye Lane Diva")
+	var cfg8: FloorConfig = load("res://resources/floor_configs/floor_8.tres")
+	check(cfg8.enemy_pool.has("res://resources/enemy_pool/rift_caller.tres"), "Piso 8 incluye Rift Caller")
+
+	check(CombatConstants.PATH_EMPOWER_MAX == 1, "path_empower capped at 1")
+	check(CombatConstants.HAZARD_PULSES == 3, "Hazards con 3 pulsos")
+	check(CombatConstants.ELITE_HAZARD_DMG_BONUS <= 1.5, "Élite dmg bonus contenido")
+
+	var warden: BossData = load("res://resources/boss_pool/crystal_warden.tres")
+	check(warden.abilities.has("phase_storm"), "Crystal Warden phase_storm")
+
 	print("SET PIECES/ROUTES: %d checks, %d failures" % [checks, failures])
 	quit(1 if failures else 0)

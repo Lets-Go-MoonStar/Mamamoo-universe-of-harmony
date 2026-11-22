@@ -146,3 +146,4 @@ que referencia la pool completa y filtra por rango de piso de cada variante.
 12. ~~Profundidad de jugabilidad.~~ (foes firmados, eventos late, feedback visual, upgrades meta, picos por banda)
 13. ~~Espectáculo + builds + arenas.~~ (telegraphs/hazards, rutas Solar/Moonbyul/Wheein/Hwasa, SFX en acordes, 3 foes nuevos)
 14. ~~Set pieces + rutas v2.~~ (élite cruz, phase_storm en jefes, evento path_encore, sinergias por ruta)
+15. ~~Show / variedad / balance arenas.~~ (patrones rotativos, SFX phase/setpiece, pulse/nudge, caps CombatConstants, Lane Diva / Rift Caller)

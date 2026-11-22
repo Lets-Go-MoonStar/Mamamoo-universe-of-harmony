@@ -91,6 +91,8 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 		"res://resources/enemy_pool/choir_shade.tres",
 		"res://resources/enemy_pool/grav_anchor.tres",
 		"res://resources/enemy_pool/stage_marshal.tres",
+		"res://resources/enemy_pool/lane_diva.tres",
+		"res://resources/enemy_pool/rift_caller.tres",
 	]
 	var pool: Array[String] = early.duplicate()
 	if floor_number >= 2:
@@ -110,8 +112,10 @@ static func enemy_pool_for(floor_number: int) -> Array[String]:
 	if floor_number >= 7:
 		pool.append(extra[3])
 		pool.append(extra[7])
+		pool.append(extra[9])
 	if floor_number >= 8:
 		pool.append(extra[4])
+		pool.append(extra[10])
 	return pool
 
 static func boss_pool_for(floor_number: int) -> Array[String]:

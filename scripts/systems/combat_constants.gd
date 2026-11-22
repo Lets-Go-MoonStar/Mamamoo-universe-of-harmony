@@ -35,3 +35,17 @@ const REACTION_NOTE_RELIC := 0.35
 const NOTE_CD := 3.0
 const ENCORE_CRIT_CHANCE := 0.10
 const ENCORE_CRIT_MULT := 1.65
+
+# --- Arenas / set pieces / rutas (tunear tras playtest) ---------------------
+const HAZARD_WARN := 1.25
+const HAZARD_DANGER := 0.70
+const HAZARD_PULSES := 3
+const ELITE_HAZARD_WARN := 1.45
+const ELITE_HAZARD_DMG_BONUS := 1.0
+const BOSS_STORM_DMG_BONUS := 1.5
+const PATH_EMPOWER_MAX := 1
+const PATH_EMPOWER_STEP := 0.06
+const SOLAR_HEAL_COMPOSURE := 3.0
+const MOONBYUL_DODGE_SHOT := 0.15
+const HWASA_HIGH_COMP_BONUS := 0.06
+const WHEEIN_CHAIN_BONUS := 0.5

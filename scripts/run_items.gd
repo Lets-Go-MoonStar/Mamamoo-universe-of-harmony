@@ -163,7 +163,7 @@ func heal_member(index: int, amount: float) -> void:
 		player.member_voice[index] = minf(player.voice_max, before + healed)
 		# Ruta Solar: curar a la activa genera Compostura (sinergia de build).
 		if player.meta_path == "solar" and index == player.active_index and player.member_voice[index] > before:
-			player.gain_composure(4.0)
+			player.gain_composure(CombatConstants.SOLAR_HEAL_COMPOSURE)
 
 # Cura a las integrantes vivas con una fracción de la Voz máxima (no revive).
 func heal_team(fraction: float) -> void:
@@ -281,9 +281,9 @@ func damage_multiplier(member: int) -> float:
 		bonus += maxf(0.0, player.adlib_damage_mult - 1.0)
 	# Rutas v2: Moonbyul tras esquiva; Hwasa con Compostura alta.
 	if player.meta_path == "moonbyul" and player.dodge_shot_boost > 0.0:
-		bonus += 0.18
+		bonus += CombatConstants.MOONBYUL_DODGE_SHOT
 	if player.meta_path == "hwasa" and player.composure >= 70.0:
-		bonus += 0.08
+		bonus += CombatConstants.HWASA_HIGH_COMP_BONUS
 	return 1.0 + minf(1.0, bonus)
 
 # Al cambiar de integrante: órbita cósmica rara (daño de área cada 4 cambios),

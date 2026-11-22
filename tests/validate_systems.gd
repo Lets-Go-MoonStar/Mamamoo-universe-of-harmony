@@ -22,6 +22,8 @@ func _initialize() -> void:
 		"res://resources/enemy_pool/choir_shade.tres",
 		"res://resources/enemy_pool/grav_anchor.tres",
 		"res://resources/enemy_pool/stage_marshal.tres",
+		"res://resources/enemy_pool/lane_diva.tres",
+		"res://resources/enemy_pool/rift_caller.tres",
 	]
 	for path in pools:
 		var data: EnemyData = load(path)
